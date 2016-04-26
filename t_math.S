@@ -1,6 +1,7 @@
 .text
 	.global _main
 	.extern _printf
+	.extern _scanf
 
 _main:
 	jmp main_fun
@@ -34,7 +35,7 @@ main_fun:
 	push b_var(%rip)
 	pop %rcx
 	pop %rax
-	imul %rcx, %rax
+	mul %rcx
 	push %rax
 	pop %rax
 	mov %rax, mul_var(%rip)
@@ -43,7 +44,7 @@ main_fun:
 	pop %rcx
 	pop %rax
 	mov $0, %rdx
-	idiv %rcx
+	div %rcx
 	push %rax
 	pop %rax
 	mov %rax, div_var(%rip)

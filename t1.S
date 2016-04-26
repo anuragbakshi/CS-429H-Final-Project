@@ -1,6 +1,7 @@
 .text
 	.global _main
 	.extern _printf
+	.extern _scanf
 
 _main:
 	jmp main_fun
@@ -14,7 +15,7 @@ main_fun:
 	push $4
 	pop %rcx
 	pop %rax
-	imul %rcx, %rax
+	mul %rcx
 	push %rax
 	push $5
 	pop %rcx
@@ -39,7 +40,7 @@ main_fun:
 	push $4
 	pop %rcx
 	pop %rax
-	imul %rcx, %rax
+	mul %rcx
 	push %rax
 	push $5
 	pop %rcx
@@ -56,7 +57,7 @@ main_fun:
 	push $4
 	pop %rcx
 	pop %rax
-	imul %rcx, %rax
+	mul %rcx
 	push %rax
 	push $5
 	pop %rcx
@@ -82,7 +83,7 @@ main_fun:
 	push %rax
 	pop %rcx
 	pop %rax
-	imul %rcx, %rax
+	mul %rcx
 	push %rax
 	pop %rcx
 	pop %rax

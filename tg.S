@@ -1,6 +1,7 @@
 .text
 	.global _main
 	.extern _printf
+	.extern _scanf
 
 _main:
 	jmp main_fun

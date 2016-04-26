@@ -1,6 +1,7 @@
 .text
 	.global _main
 	.extern _printf
+	.extern _scanf
 
 _main:
 	jmp main_fun
@@ -30,7 +31,7 @@ c_fun:
 	push 24(%rbp)
 	pop %rcx
 	pop %rax
-	imul %rcx, %rax
+	mul %rcx
 	push %rax
 	lea format(%rip), %rdi
 	pop %rsi

@@ -1,6 +1,7 @@
 .text
 	.global _main
 	.extern _printf
+	.extern _scanf
 
 _main:
 	jmp main_fun
@@ -42,7 +43,7 @@ factorial_fun:
 	push i_var(%rip)
 	pop %rcx
 	pop %rax
-	imul %rcx, %rax
+	mul %rcx
 	push %rax
 	pop %rax
 	mov %rax, v_var(%rip)

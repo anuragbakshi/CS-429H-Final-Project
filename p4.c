@@ -23,9 +23,11 @@ https://sourceware.org/gdb/onlinedocs/gdb/TUI-Commands.html
 // because macs are special...
 #ifdef __APPLE__
 #define PRINTF_NAME "_printf"
+#define SCANF_NAME "_scanf"
 #define MAIN_NAME "_main"
 #else
 #define PRINTF_NAME "printf"
+#define SCANF_NAME "scanf"
 #define MAIN_NAME "main"
 #endif
 
@@ -290,7 +292,7 @@ void genExpression(Expression *expression, Formals *scope) {
 			genExpression(expression->right, scope);
 
 			genLoadOperands();
-			printf("	imul %%rcx, %%rax\n");
+			printf("	mul %%rcx\n");
 			genSaveResult();
 		} break;
 
@@ -301,7 +303,7 @@ void genExpression(Expression *expression, Formals *scope) {
 
 			genLoadOperands();
 			printf("	mov $0, %%rdx\n");
-			printf("	idiv %%rcx\n");
+			printf("	div %%rcx\n");
 			genSaveResult();
 		} break;
 
@@ -407,6 +409,7 @@ int main(int argc, char *argv[]) {
 
 	// declare printf
 	printf("	.extern %s\n", PRINTF_NAME);
+	printf("	.extern %s\n", SCANF_NAME);
 	printf("\n");
 
 	// generate the program entry point
