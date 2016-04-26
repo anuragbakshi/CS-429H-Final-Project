@@ -7,29 +7,27 @@
 
 /*
 REFERENCES:
-All from p4 (calling conventions, etc)
-Discussed general PPC stuff with Quang Duong
+All from p3
 
-General architechure info:
-http://www.ibm.com/developerworks/library/l-powasm1/
-http://physinfo.ulb.ac.be/divers_html/powerpc_programming_info/intro_to_ppc/ppc4_runtime4.html
-http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi.html#FUNC-DES
+Stack frames:
+http://stackoverflow.com/questions/3699283/what-is-stack-frame-in-assembly
+https://en.wikipedia.org/wiki/Call_stack#Structure
 
-Instruction references:
-http://www.tentech.ca/downloads/other/PPC_Quick_Ref_Card-Rev1_Oct12_2010.pdf
-http://www.ds.ewi.tudelft.nl/vakken/in1006/instruction-set/
+Calling conventions:
+https://en.wikibooks.org/wiki/X86_Disassembly/Calling_Convention_Examples#CDECL_2
+
+Debugging:
+https://sourceware.org/gdb/onlinedocs/gdb/TUI-Commands.html
 */
 
-/*
-r2 = stack base pointer
-r1 = stack top pointer
-
-r6 = between stack and global var mem (+ is globals, - is stack)
-
-r15 = argument to printf
-r25, r26 = general operands
-r27 = random extra space
-*/
+// because macs are special...
+#ifdef __APPLE__
+#define PRINTF_NAME "_printf"
+#define MAIN_NAME "_main"
+#else
+#define PRINTF_NAME "printf"
+#define MAIN_NAME "main"
+#endif
 
 // make iterating over linked lists easy
 #define FOREACH(START) for(typeof(*(START)) *__item = (START); __item != NULL; __item = __item->rest)
@@ -39,6 +37,8 @@ Formals *globalScope = NULL;
 // statement that returns 0 (added to the end of all methods)
 Statement *defaultReturn = NULL;
 
+// true if the stack is aligned to 16 bytes
+bool stackAligned = false;
 // used to generate unique labels
 int labelCounter = 0;
 
@@ -85,24 +85,21 @@ Formals *addGlobalVar(char *str) {
 
 void genFun(Fun *);
 void genStatement(Statement *, Formals *);
-void genLoadSingle();
 void genLoadOperands();
 void genSaveResult();
 void genEvalBoolean();
 void genExpression(Expression *, Formals *);
 
 void genFun(Fun *function) {
+	// stack is misaligned at the beginning of a function
+	stackAligned = false;
+
 	// create the label and save the previous base pointer
 	printf("%s_fun:\n", function->name);
-
-	// push return address
-	printf("	mflr 15\n");
-	printf("	push 15\n");
-
-	// push stack base pointer
-	printf("	push 2\n");
+	printf("	push %%rbp\n");
+	stackAligned = !stackAligned;
 	// set the base pointer to after existing data
-	printf("	mr 2, 1\n");
+	printf("	mov %%rsp, %%rbp\n");
 
 	// generate the body and add the default return statement
 	genStatement(function->body, function->formals);
@@ -119,14 +116,15 @@ void genStatement(Statement *statement, Formals *scope) {
 
 			// generate the RHS and load it into %rax
 			genExpression(statement->assignValue, scope);
-			genLoadSingle();
+			printf("	pop %%rax\n");
+			stackAligned = !stackAligned;
 
 			if(localVar != NULL) { // if there is a local var, set that
 				int offset = 16 + 8 * (scope->n - localVar->n);
-				printf("	std 25, %d(2)\n", offset);
+				printf("	mov %%rax, %d(%%rbp)\n", offset);
 			} else { // otherwise, set the global one
 				Formals *globalVar = addGlobalVar(statement->assignName);
-				printf("	std 25, %d(6)\n", 8 * globalVar->n);
+				printf("	mov %%rax, %s_var(%%rip)\n", globalVar->first);
 			}
 		} break;
 
@@ -134,45 +132,55 @@ void genStatement(Statement *statement, Formals *scope) {
 			// generate the value being printed
 			genExpression(statement->printValue, scope);
 
-			// load the argument and call print
-			printf("	pop 15\n");
-			printf("	bl print\n");
+			// load the arguments for printf
+			printf("	lea format(%%rip), %%rdi\n");
+			printf("	pop %%rsi\n");
+			stackAligned = !stackAligned;
+
+			// if the stack isn't aligned, push 8 bytes
+			if(!stackAligned) {
+				printf("	sub $8, %%rsp\n");
+			}
+
+			// make the actual call to printf
+			printf("	call %s\n", PRINTF_NAME);
+
+			// if we had pushed to align, pop to restore the correct stack
+			if(!stackAligned) {
+				printf("	add $8, %%rsp\n");
+			}
 		} break;
 
 		case sIf: {
 			int labelNum = labelCounter++;
 
-			printf("	# if\n");
-
 			// generate the condition and set flags accordingly
 			genExpression(statement->ifCondition, scope);
 			genEvalBoolean();
 
+			bool currentAligned = stackAligned;
 			// if false, go to the else part
-			printf("	beq else_%d\n", labelNum);
+			printf("	je else_%d\n", labelNum);
 
 			// if true, continue to the then part
 			genStatement(statement->ifThen, scope);
 			// after running the then part, skip the else
-			printf("	b after_%d\n", labelNum);
+			printf("	jmp after_%d\n", labelNum);
 
+			stackAligned = currentAligned;
 			// generate the else part, if there is one
-			printf("	# else\n");
 			printf("	else_%d:\n", labelNum);
 			if(statement->ifElse != NULL) {
 				genStatement(statement->ifElse, scope);
 			}
 
 			// put the after label after the whole construct
-			printf("	# endif\n");
+			stackAligned = currentAligned;
 			printf("	after_%d:\n", labelNum);
 		} break;
 
 		case sWhile:{
 			int labelNum = labelCounter++;
-
-			printf("	# loop\n");
-
 			// label the beginning of the loop
 			printf("	loop_%d:\n", labelNum);
 
@@ -181,13 +189,12 @@ void genStatement(Statement *statement, Formals *scope) {
 			genEvalBoolean();
 
 			// if false, skip the loop body
-			printf("	beq after%d\n", labelNum);
+			printf("	je after%d\n", labelNum);
 
 			genStatement(statement->whileBody, scope);
 			// go back to the beginning
-			printf("	b loop_%d\n", labelNum);
+			printf("	jmp loop_%d\n", labelNum);
 			// put the after label after the whole construct
-			printf("	# endloop\n");
 			printf("	after%d:\n", labelNum);
 		} break;
 
@@ -199,42 +206,37 @@ void genStatement(Statement *statement, Formals *scope) {
 		case sReturn: {
 			// generate the value being returned and put it into %rax
 			genExpression(statement->returnValue, scope);
-			genLoadSingle();
+			printf("	pop %%rax\n");
+			stackAligned = !stackAligned;
 
 			// reset the stack pointers
-			printf("	mr 1, 2\n");
+			printf("	mov %%rbp, %%rsp\n");
+			printf("	pop %%rbp\n");
+			stackAligned = !stackAligned;
 
-			printf("	pop 2\n");
-
-			printf("	pop 15\n");
-			printf("	mtlr 15\n");
-			printf("	blr\n");
+			printf("	ret\n");
 		} break;
 	}
 }
 
-/* load operand for unary operations */
-void genLoadSingle() {
-	printf("	pop 25\n");
-}
-
 /* load operands for binary operations */
 void genLoadOperands() {
-	printf("	pop 26\n");
-
-	genLoadSingle();
+	printf("	pop %%rcx\n");
+	printf("	pop %%rax\n");
 }
 
 /* push the result onto the stack */
 void genSaveResult() {
-	printf("	push 25\n");
+	printf("	push %%rax\n");
+	stackAligned = !stackAligned;
 }
 
 /* set the flags for a boolean value (0 = false, !0 = true) */
 void genEvalBoolean() {
-	genLoadSingle();
+	printf("	pop %%rax\n");
+	stackAligned = !stackAligned;
 
-	printf("	cmpdi 25, 0\n");
+	printf("	cmp $0, %%rax\n");
 }
 
 void genExpression(Expression *expression, Formals *scope) {
@@ -244,33 +246,20 @@ void genExpression(Expression *expression, Formals *scope) {
 			Formals *localVar = findNode(scope, expression->varName);
 
 			if(localVar != NULL) {
-				printf("	# load local %s\n", localVar->first);
-
 				int offset = 16 + 8 * (scope->n - localVar->n);
-				printf("	ld 15, %d(2)\n", offset);
-				printf("	push 15\n");
+				printf("	push %d(%%rbp)\n", offset);
 			} else {
 				Formals *globalVar = addGlobalVar(expression->varName);
-
-				printf("	# load global %s\n", globalVar->first);
-
-				printf("	ld 15, %d(6)\n", 8 * globalVar->n);
-				printf("	push 15\n");
+				printf("	push %s_var(%%rip)\n", globalVar->first);
 			}
+
+			stackAligned = !stackAligned;
 		} break;
 
 		case eVAL: {
 			// push the immediate value onto the stack
-			printf("	# load immediate 0x%"PRIx64"\n", expression->val);
-
-			// shift each 16-bit block into the register (high to low)
-			printf("	xor 15, 15, 15\n");
-			printf("	oris 15, 15, 0x%x\n", (uint16_t) ((expression->val >> 48) & 0xffff));
-			printf("	oris 15, 15, 0x%x\n", (uint16_t) ((expression->val >> 32) & 0xffff));
-			printf("	oris 15, 15, 0x%x\n", (uint16_t) ((expression->val >> 16) & 0xffff));
-			printf("	ori 15, 15, 0x%x\n", (uint16_t) (expression->val & 0xffff));
-
-			printf("	push 15\n");
+			printf("	push $%"PRIu64"\n", expression->val);
+			stackAligned = !stackAligned;
 		} break;
 
 		case ePLUS: {
@@ -278,11 +267,9 @@ void genExpression(Expression *expression, Formals *scope) {
 			genExpression(expression->left, scope);
 			genExpression(expression->right, scope);
 
-			printf("	# +\n");
-
 			// do the addition
 			genLoadOperands();
-			printf("	add 25, 25, 26\n");
+			printf("	add %%rcx, %%rax\n");
 			genSaveResult();
 		} break;
 
@@ -291,11 +278,9 @@ void genExpression(Expression *expression, Formals *scope) {
 			genExpression(expression->left, scope);
 			genExpression(expression->right, scope);
 
-			printf("	# -\n");
-
 			// do the addition
 			genLoadOperands();
-			printf("	sub 25, 25, 26\n");
+			printf("	sub %%rcx, %%rax\n");
 			genSaveResult();
 		} break;
 
@@ -304,10 +289,8 @@ void genExpression(Expression *expression, Formals *scope) {
 			genExpression(expression->left, scope);
 			genExpression(expression->right, scope);
 
-			printf("	# *\n");
-
 			genLoadOperands();
-			printf("	mulld 25, 25, 26\n");
+			printf("	imul %%rcx, %%rax\n");
 			genSaveResult();
 		} break;
 
@@ -316,10 +299,9 @@ void genExpression(Expression *expression, Formals *scope) {
 			genExpression(expression->left, scope);
 			genExpression(expression->right, scope);
 
-			printf("	# /\n");
-
 			genLoadOperands();
-			printf("	divd 25, 25, 26\n");
+			printf("	mov $0, %%rdx\n");
+			printf("	idiv %%rcx\n");
 			genSaveResult();
 		} break;
 
@@ -328,14 +310,11 @@ void genExpression(Expression *expression, Formals *scope) {
 			genExpression(expression->left, scope);
 			genExpression(expression->right, scope);
 
-			printf("	# ==\n");
-
 			genLoadOperands();
 			// compare the operands and push 0 if false, and 1 if true
-			printf("	cmpd 25, 26\n");
-			printf("	mfcr 25\n");
-			printf("	srdi 25, 25, 29\n");
-			printf("	andi. 25, 25, 1\n");
+			printf("	cmp %%rax, %%rcx\n");
+			printf("	mov $0, %%rax\n");
+			printf("	sete %%al\n");
 			genSaveResult();
 		} break;
 
@@ -344,14 +323,10 @@ void genExpression(Expression *expression, Formals *scope) {
 			genExpression(expression->left, scope);
 			genExpression(expression->right, scope);
 
-			printf("	# !=\n");
-
 			genLoadOperands();
-			printf("	cmpd 25, 26\n");
-			printf("	mfcr 25\n");
-			printf("	srdi 25, 25, 29\n");
-			printf("	andi. 25, 25, 1\n");
-			printf("	xori 25, 25, 1\n");
+			printf("	cmp %%rax, %%rcx\n");
+			printf("	mov $0, %%rax\n");
+			printf("	setne %%al\n");
 			genSaveResult();
 		} break;
 
@@ -360,13 +335,10 @@ void genExpression(Expression *expression, Formals *scope) {
 			genExpression(expression->right, scope);
 			genExpression(expression->left, scope);
 
-			printf("	# <\n");
-
 			genLoadOperands();
-			printf("	cmpd 25, 26\n");
-			printf("	mfcr 25\n");
-			printf("	srdi 25, 25, 31\n");
-			printf("	andi. 25, 25, 1\n");
+			printf("	cmp %%rax, %%rcx\n");
+			printf("	mov $0, %%rax\n");
+			printf("	setb %%al\n");
 			genSaveResult();
 		} break;
 
@@ -375,18 +347,24 @@ void genExpression(Expression *expression, Formals *scope) {
 			genExpression(expression->right, scope);
 			genExpression(expression->left, scope);
 
-			printf("	# >\n");
-
 			genLoadOperands();
-			printf("	cmpd 25, 26\n");
-			printf("	mfcr 25\n");
-			printf("	srdi 25, 25, 30\n");
-			printf("	andi. 25, 25, 1\n");
+			printf("	cmp %%rax, %%rcx\n");
+			printf("	mov $0, %%rax\n");
+			printf("	seta %%al\n");
 			genSaveResult();
 		} break;
 
 		case eCALL: {
-			printf("	# %s(...)\n", expression->callName);
+			// calculate the alignment after pushing args
+			bool currentAligned = stackAligned;
+			if(expression->callActuals != NULL) {
+				currentAligned ^= expression->callActuals->n & 1;
+			}
+
+			// add padding if necessary
+			if(!currentAligned) {
+				printf("	sub $8, %%rsp\n");
+			}
 
 			// push arguments onto stack
 			FOREACH(expression->callActuals) {
@@ -394,10 +372,18 @@ void genExpression(Expression *expression, Formals *scope) {
 			}
 
 			// call the function
-			printf("	bl %s_fun\n", expression->callName);
+			printf("	call %s_fun\n", expression->callName);
+
+			// remove the padding if we added it
+			if(!currentAligned) {
+				printf("	add $8, %%rsp\n");
+			}
+
+			stackAligned = currentAligned;
 
 			// push return value onto stack
-			genSaveResult();
+			printf("	push %%rax\n");
+			stackAligned = !stackAligned;
 		} break;
 	}
 }
@@ -411,53 +397,36 @@ int main(int argc, char *argv[]) {
 	defaultReturn->returnValue->kind = eVAL;
 	defaultReturn->returnValue->val = 0;
 
-	globalScope = calloc(1, sizeof(Formals));
-	globalScope->first = "";
-
 	// parse the code
 	Funs *p = parse();
 
-	// use macros to emulate stack functionality
-	printf(".macro push reg\n");
-	printf("	addi 1, 1, -8\n");
-	printf("	std \\reg, 0(1)\n");
-	printf(".endm\n");
-
-	printf(".macro pop reg\n");
-	printf("	ld \\reg, 0(1)\n");
-	printf("	addi 1, 1, 8\n");
-	printf(".endm\n");
-
+	// begin the .text section (code)
+	printf(".text\n");
 	// make main accessible from other files
-	printf(".global main\n");
+	printf("	.global %s\n", MAIN_NAME);
+
+	// declare printf
+	printf("	.extern %s\n", PRINTF_NAME);
 	printf("\n");
 
 	// generate the program entry point
-	printf("main:\n");
-	printf("	mr 6, 2\n");
-	printf("	addi 2, 2, -8\n");
-	printf("	mr 1, 2\n");
-	printf("	bl main_fun\n");
-	printf("	mr 6, 25\n");
-	printf("	b exit\n");
+	printf("%s:\n", MAIN_NAME);
+	printf("	jmp main_fun\n");
 	printf("\n");
 
 	// generate all the function
 	FOREACH(p) genFun(__item->first);
 
-	// begin the .data section (8 KB for stack, 8 * n bytes for globals)
+	// begin the .data section (variables)
 	printf(".data\n");
-	printf(".fill 8192\n");
-	printf("stack_base:\n");
-	printf("data: .fill %d\n", 8 * globalScope->n);
-	printf("\n");
+	// the format string to print variables on assignment
+	printf("	format: .string \"%%d\\n\"\n");
 
-	printf(".global entry\n");
-	printf("entry:\n");
-	printf("	.quad main\n");
-	printf("	.quad data\n");
-	printf("	.quad 0\n");
-	printf("\n");
+	// generate out allocations for all global vars and their names
+	FOREACH(globalScope) {
+		printf("	%s_var: .quad 0\n", __item->first);
+		printf("	%1$s_name: .string \"%1$s\"\n", __item->first);
+	}
 
 	return 0;
 }
