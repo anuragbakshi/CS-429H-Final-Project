@@ -19,7 +19,9 @@ enum EKind {
     eVAR,
     eVAL,
     ePLUS,
+    eMINUS,
     eMUL,
+    eDIV,
     eEQ,
     eNE,
     eLT,
@@ -42,7 +44,7 @@ struct Expression {
         };
     };
 };
-    
+
 
 typedef struct Block {
     int n;

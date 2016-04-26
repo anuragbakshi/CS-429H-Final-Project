@@ -220,9 +220,9 @@ void genLoadSingle() {
 
 /* load operands for binary operations */
 void genLoadOperands() {
-	genLoadSingle();
-
 	printf("	pop 26\n");
+
+	genLoadSingle();
 }
 
 /* push the result onto the stack */
@@ -286,6 +286,19 @@ void genExpression(Expression *expression, Formals *scope) {
 			genSaveResult();
 		} break;
 
+		case eMINUS: {
+			// generate the LHS and RHS
+			genExpression(expression->left, scope);
+			genExpression(expression->right, scope);
+
+			printf("	# -\n");
+
+			// do the addition
+			genLoadOperands();
+			printf("	sub 25, 25, 26\n");
+			genSaveResult();
+		} break;
+
 		case eMUL: {
 			// same as ePLUS
 			genExpression(expression->left, scope);
@@ -294,17 +307,19 @@ void genExpression(Expression *expression, Formals *scope) {
 			printf("	# *\n");
 
 			genLoadOperands();
-			// printf("	xor 27, 27, 27\n");
-			// // move one operand into r27
-			// printf("	mr 27, 25\n");
-			// // multiply the high word and shift it into place
-			// printf("	mulhw 25, 26, 27\n");
-			// printf("	sldi 25, 25, 16\n");
-			// printf("	sldi 25, 25, 16\n");
-			// // multiply the low word and put it into place
-			// printf("	mullw 27, 26, 27\n");
-			// printf("	or 25, 25, 27\n");
 			printf("	mulld 25, 25, 26\n");
+			genSaveResult();
+		} break;
+
+		case eDIV: {
+			// same as ePLUS
+			genExpression(expression->left, scope);
+			genExpression(expression->right, scope);
+
+			printf("	# /\n");
+
+			genLoadOperands();
+			printf("	divd 25, 25, 26\n");
 			genSaveResult();
 		} break;
 

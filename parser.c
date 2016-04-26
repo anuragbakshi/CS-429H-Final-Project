@@ -15,7 +15,9 @@ enum TKind {
 	tLEFT,
 	tRIGHT,
 	tPLUS,
+	tMINUS,
 	tMUL,
+	tDIV,
 	tLBRACE,
 	tRBRACE,
 	tEQ,
@@ -174,9 +176,17 @@ static void peek() {
 				consumeChar();
 				current.kind = tPLUS;
 				return;
+			case '-':
+				consumeChar();
+				current.kind = tMINUS;
+				return;
 			case '*':
 				consumeChar();
 				current.kind = tMUL;
+				return;
+			case '/':
+				consumeChar();
+				current.kind = tDIV;
 				return;
 			case '=':
 				consumeChar();
@@ -205,7 +215,9 @@ static void peek() {
 				current.kind = tCOMMA;
 				return;
 			case ' ':
-			case 10:
+			case '\t':
+			case '\n':
+			case '\r':
 				consumeChar();
 				break;
 			default:
@@ -325,9 +337,19 @@ static int isMul() {
 	return current.kind == tMUL;
 }
 
+static int isDiv() {
+	peek();
+	return current.kind == tDIV;
+}
+
 static int isPlus() {
 	peek();
 	return current.kind == tPLUS;
+}
+
+static int isMinus() {
+	peek();
+	return current.kind == tMINUS;
 }
 
 static char *getId() {
@@ -442,6 +464,8 @@ static Expression *e2(void) {
 
 	if (isMul()) {
 		kind = eMUL;
+	} else if(isDiv()) {
+		kind = eDIV;
 	} else {
 		return left;
 	}
@@ -464,6 +488,8 @@ static Expression *e3(void) {
 
 	if (isPlus()) {
 		kind = ePLUS;
+	} else if(isMinus()) {
+		kind = eMINUS;
 	} else {
 		return left;
 	}

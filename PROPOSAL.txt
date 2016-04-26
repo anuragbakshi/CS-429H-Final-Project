@@ -1,8 +1,8 @@
 Team members:
-
-
-
-
+Anurag Bakshi
+Harsh Goyal
 
 Proposal:
-
+1. To optimize the fun-to-asm compiler.
+2. To add I/O to fun.
+3. To add more arithmetic operators to fun.
