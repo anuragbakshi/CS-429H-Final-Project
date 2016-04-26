@@ -30,6 +30,7 @@ enum TKind {
 	tGT,
 	tNE,
 	tPRINT,
+	tSCAN,
 	tFUN,
 	tCOMMA,
 	tRETURN
@@ -119,6 +120,8 @@ static void peekId(void) {
 				current.kind = tWHILE;
 			} else if (strcmp(current.ptr, "print") == 0) {
 				current.kind = tPRINT;
+			} else if (strcmp(current.ptr, "scan") == 0) {
+				current.kind = tSCAN;
 			} else if (strcmp(current.ptr, "fun") == 0) {
 				current.kind = tFUN;
 			} else if (strcmp(current.ptr, "return") == 0) {
@@ -260,6 +263,11 @@ static int isWhile() {
 static int isPrint() {
 	peek();
 	return current.kind == tPRINT;
+}
+
+static int isScan() {
+	peek();
+	return current.kind == tSCAN;
 }
 
 static int isIf() {
@@ -584,6 +592,23 @@ static Statement *statement(void) {
 		consume();
 
 		p->printValue = expression();
+
+		if (isSemi()) {
+			consume();
+		}
+
+		return p;
+	} else if (isScan()) {
+		Statement *p = NEW(Statement);
+		p->kind = sScan;
+
+		consume();
+
+		if(!isId())
+			error();
+
+		p->scanVar = getId();
+		consume();
 
 		if (isSemi()) {
 			consume();

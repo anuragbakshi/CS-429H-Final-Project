@@ -135,7 +135,7 @@ void genStatement(Statement *statement, Formals *scope) {
 			genExpression(statement->printValue, scope);
 
 			// load the arguments for printf
-			printf("	lea format(%%rip), %%rdi\n");
+			printf("	lea printf_format(%%rip), %%rdi\n");
 			printf("	pop %%rsi\n");
 			stackAligned = !stackAligned;
 
@@ -146,6 +146,40 @@ void genStatement(Statement *statement, Formals *scope) {
 
 			// make the actual call to printf
 			printf("	call %s\n", PRINTF_NAME);
+
+			// if we had pushed to align, pop to restore the correct stack
+			if(!stackAligned) {
+				printf("	add $8, %%rsp\n");
+			}
+		} break;
+
+		case sScan: {
+			// generate the value being printed
+			// genExpression(statement->printValue, scope);
+
+			// load the arguments for scanf
+			printf("	lea scanf_format(%%rip), %%rdi\n");
+			// printf("	pop %%rsi\n");
+			// stackAligned = !stackAligned;
+
+			// see if a local var with that name exists
+			Formals *localVar = findNode(scope, statement->scanVar);
+
+			if(localVar != NULL) { // if there is a local var, get its address
+				int offset = 16 + 8 * (scope->n - localVar->n);
+				printf("	lea %d(%%rbp), %%rsi\n", offset);
+			} else { // otherwise, use the global one's address
+				Formals *globalVar = addGlobalVar(statement->scanVar);
+				printf("	lea %s_var(%%rip), %%rsi\n", globalVar->first);
+			}
+
+			// if the stack isn't aligned, push 8 bytes
+			if(!stackAligned) {
+				printf("	sub $8, %%rsp\n");
+			}
+
+			// make the actual call to scanf
+			printf("	call %s\n", SCANF_NAME);
 
 			// if we had pushed to align, pop to restore the correct stack
 			if(!stackAligned) {
@@ -423,7 +457,8 @@ int main(int argc, char *argv[]) {
 	// begin the .data section (variables)
 	printf(".data\n");
 	// the format string to print variables on assignment
-	printf("	format: .string \"%%d\\n\"\n");
+	printf("	printf_format: .string \"%%d\\n\"\n");
+	printf("	scanf_format: .string \"%%d\"\n");
 
 	// generate out allocations for all global vars and their names
 	FOREACH(globalScope) {

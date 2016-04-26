@@ -9,29 +9,20 @@ _main:
 main_fun:
 	push %rbp
 	mov %rsp, %rbp
-	push $2
+	push $0
 	pop %rax
 	mov %rax, x_var(%rip)
 	push x_var(%rip)
-	push $2
-	pop %rcx
-	pop %rax
-	add %rcx, %rax
-	push %rax
-	pop %rax
-	cmp $0, %rax
-	je else_0
-	push $1
-	lea format(%rip), %rdi
+	lea printf_format(%rip), %rdi
 	pop %rsi
 	call _printf
-	jmp after_0
-	else_0:
-	push $0
-	lea format(%rip), %rdi
+	lea scanf_format(%rip), %rdi
+	lea x_var(%rip), %rsi
+	call _scanf
+	push x_var(%rip)
+	lea printf_format(%rip), %rdi
 	pop %rsi
 	call _printf
-	after_0:
 	push $0
 	pop %rax
 	mov %rbp, %rsp
@@ -39,6 +30,7 @@ main_fun:
 	ret
 
 .data
-	format: .string "%d\n"
+	printf_format: .string "%d\n"
+	scanf_format: .string "%d"
 	x_var: .quad 0
 	x_name: .string "x"

@@ -70,6 +70,7 @@ typedef struct Print {
 enum SKind {
     sAssignment,
     sPrint,
+    sScan,
     sIf,
     sWhile,
     sBlock,
@@ -84,6 +85,7 @@ struct Statement {
             Expression *assignValue;
         };
         Expression *printValue;
+        char *scanVar;
         struct {
             Expression* ifCondition;
             Statement* ifThen;
