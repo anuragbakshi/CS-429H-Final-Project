@@ -10,119 +10,119 @@ struct Statement;
 typedef struct Statement Statement;
 
 typedef struct Actuals {
-    int n;
-    Expression *first;
-    struct Actuals *rest;
+	int n;
+	Expression *first;
+	struct Actuals *rest;
 } Actuals;
 
 enum EKind {
-    eVAR,
-    eVAL,
-    ePLUS,
-    eMINUS,
-    eMUL,
-    eDIV,
-    eEQ,
-    eNE,
-    eLT,
-    eGT,
-    eCALL
+	eVAR,
+	eVAL,
+	ePLUS,
+	eMINUS,
+	eMUL,
+	eDIV,
+	eEQ,
+	eNE,
+	eLT,
+	eGT,
+	eCALL
 };
 
 struct Expression {
-    enum EKind kind;
-    union {
-        /* EVAR */ char* varName;
-        /* EVAL */ uint64_t val;
-        /* EPLUS, EMUL, ... */ struct {
-            Expression *left;
-            Expression *right;
-        };
-        /* ECALL */ struct {
-            char* callName;
-            Actuals* callActuals;
-        };
-    };
+	enum EKind kind;
+	union {
+		/* EVAR */ char *varName;
+		/* EVAL */ uint64_t val;
+		/* EPLUS, EMUL, ... */ struct {
+			Expression *left;
+			Expression *right;
+		};
+		/* ECALL */ struct {
+			char *callName;
+			Actuals *callActuals;
+		};
+	};
 };
 
 
 typedef struct Block {
-    int n;
-    Statement *first;
-    struct Block* rest;
+	int n;
+	Statement *first;
+	struct Block *rest;
 } Block;
 
 typedef struct While {
-    Expression *condition;
-    Statement *body;
+	Expression *condition;
+	Statement *body;
 } While;
 
 typedef struct If {
-    Expression *condition;
-    Statement *thenPart;
-    Statement *elsePart;
+	Expression *condition;
+	Statement *thenPart;
+	Statement *elsePart;
 } If;
 
 typedef struct Print {
-    Expression *expression;
+	Expression *expression;
 } Print;
 
 enum SKind {
-    sAssignment,
-    sPrint,
-    sScan,
-    sIf,
-    sWhile,
-    sBlock,
-    sReturn,
+	sAssignment,
+	sPrint,
+	sScan,
+	sIf,
+	sWhile,
+	sBlock,
+	sReturn,
 };
 
 struct Statement {
-    enum SKind kind;
-    union {
-        struct {
-            char* assignName;
-            Expression *assignValue;
-        };
-        Expression *printValue;
-        char *scanVar;
-        struct {
-            Expression* ifCondition;
-            Statement* ifThen;
-            Statement* ifElse;
-        };
-        struct {
-            Expression *whileCondition;
-            Statement* whileBody;
-        };
-        Block *block;
-        Expression* returnValue;
-    };
+	enum SKind kind;
+	union {
+		struct {
+			char *assignName;
+			Expression *assignValue;
+		};
+		Expression *printValue;
+		char *scanVar;
+		struct {
+			Expression *ifCondition;
+			Statement *ifThen;
+			Statement *ifElse;
+		};
+		struct {
+			Expression *whileCondition;
+			Statement *whileBody;
+		};
+		Block *block;
+		Expression *returnValue;
+	};
 };
 
 typedef struct Statements {
-    Statement *first;
-    struct Statemens *rest;
+	Statement *first;
+	struct Statemens *rest;
 } Statements;
 
 typedef struct Formals {
-    int n;
-    char* first;
-    struct Formals *rest;
+	int n;
+	char *first;
+	struct Formals *rest;
 } Formals;
 
 typedef struct Fun {
-    char* name;
-    Formals *formals;
-    Statement *body;
+	char *name;
+	Formals *formals;
+	Statement *body;
 } Fun;
 
 typedef struct Funs {
-    int n;
-    Fun *first;
-    struct Funs *rest;
+	int n;
+	Fun *first;
+	struct Funs *rest;
 } Funs;
 
-extern Funs* parse();
+extern Funs *parse();
 
 #endif
