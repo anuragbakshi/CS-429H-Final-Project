@@ -9,8 +9,11 @@ typedef struct Expression Expression;
 struct Statement;
 typedef struct Statement Statement;
 
-struct Fun;
-typedef struct Fun Fun;
+struct Formals;
+typedef struct Formals Formals;
+
+struct SideEffects;
+typedef struct SideEffects SideEffects;
 
 typedef struct Actuals {
 	int n;
@@ -34,6 +37,8 @@ enum EKind {
 
 struct Expression {
 	enum EKind kind;
+	SideEffects *sideEffects;
+
 	union {
 		/* EVAR */ char *varName;
 		/* EVAL */ uint64_t val;
@@ -55,21 +60,6 @@ typedef struct Block {
 	struct Block *rest;
 } Block;
 
-typedef struct While {
-	Expression *condition;
-	Statement *body;
-} While;
-
-typedef struct If {
-	Expression *condition;
-	Statement *thenPart;
-	Statement *elsePart;
-} If;
-
-typedef struct Print {
-	Expression *expression;
-} Print;
-
 enum SKind {
 	sAssignment,
 	sPrint,
@@ -82,6 +72,8 @@ enum SKind {
 
 struct Statement {
 	enum SKind kind;
+	SideEffects *sideEffects;
+
 	union {
 		struct {
 			char *assignName;
@@ -103,41 +95,39 @@ struct Statement {
 	};
 };
 
-typedef struct Formal {
-	char *name;
-	Fun *func;
-} Formal;
-
-typedef struct Formals {
+struct Formals {
 	int n;
-	Formal *first;
-
+	char *first;
 	struct Formals *rest;
-} Formals;
+};
 
-struct Fun {
+typedef struct Fun {
 	char *name;
 	Formals *formals;
 	Statement *body;
-};
+
+	SideEffects *sideEffects;
+	bool busy;
+} Fun;
 
 typedef struct Funs {
 	int n;
 	Fun *first;
-
 	struct Funs *rest;
 } Funs;
 
 extern Funs *parse();
 
-enum DKind {
-	dFun,
-	dStatement,
-	dExpression
+struct SideEffects {
+	int n;
+	bool direct;
+
+	union {
+		char *var;
+		SideEffects *indirect;
+	};
+
+	struct SideEffects *rest;
 };
-
-typedef struct Dependency {
-
-} Dependency;
 
 #endif

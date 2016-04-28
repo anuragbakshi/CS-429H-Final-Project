@@ -39,6 +39,8 @@ Formals *globalScope = NULL;
 // statement that returns 0 (added to the end of all methods)
 Statement *defaultReturn = NULL;
 
+Funs *functions;
+
 // true if the stack is aligned to 16 bytes
 bool stackAligned = false;
 // used to generate unique labels
@@ -50,7 +52,7 @@ Formals *findNode(Formals *list, char *str) {
 	// iterate over each node in the list
 	while(current != NULL) {
 		// if the node's item matches the search item, return the current node
-		if(strcmp(current->first->name, str) == 0) {
+		if(strcmp(current->first, str) == 0) {
 			return current;
 		}
 
@@ -61,7 +63,7 @@ Formals *findNode(Formals *list, char *str) {
 	return NULL;
 }
 
-Formal *addGlobalVar(char *str) {
+Formals *addGlobalVar(char *str) {
 	// try finding the variable in the list
 	Formals *node = findNode(globalScope, str);
 	if(node == NULL) { // if it doesn't exist, add a new node to the beginning
@@ -74,18 +76,50 @@ Formal *addGlobalVar(char *str) {
 			new_node->n = globalScope->n + 1;
 		}
 
-		new_node->first = calloc(1, sizeof(Formal));
-
-		new_node->first->name = str;
-		new_node->first->func = NULL;
+		new_node->first = str;
 		new_node->rest = globalScope;
 
 		globalScope = new_node;
 	} else { // if it exists, return it
-		return node->first;
+		return node;
 	}
 
-	return globalScope->first;
+	return globalScope;
+}
+
+Fun *getFunByName(char *name) {
+	FOREACH(functions) {
+		if(strcmp(__item->first->name, name) == 0) {
+			return __item->first;
+		}
+	}
+
+	return NULL;
+}
+
+void resolveSideEffectsFun(Fun *);
+void resolveSideEffectsStatement(Statement *, Formals *);
+void resolveSideEffectsExpression(Expression *, Formals *);
+
+void resolveSideEffectsFun(Fun *f) {
+	if(f->busy || f->sideEffects != NULL) {
+		return;
+	}
+
+	f->busy = true;
+
+	f->busy = false;
+}
+
+void resolveSideEffectsStatement(Statement *s, Formals *scope) {
+}
+
+void resolveSideEffectsExpression(Expression *e, Formals *scope) {
+	if(e->kind != eCALL) {
+		return;
+	}
+
+
 }
 
 void genFun(Fun *);
@@ -128,8 +162,8 @@ void genStatement(Statement *statement, Formals *scope) {
 				int offset = 16 + 8 * (scope->n - localVar->n);
 				printf("	mov %%rax, %d(%%rbp)\n", offset);
 			} else { // otherwise, set the global one
-				Formal *globalVar = addGlobalVar(statement->assignName);
-				printf("	mov %%rax, %s_var(%%rip)\n", globalVar->name);
+				Formals *globalVar = addGlobalVar(statement->assignName);
+				printf("	mov %%rax, %s_var(%%rip)\n", globalVar->first);
 			}
 		} break;
 
@@ -172,8 +206,8 @@ void genStatement(Statement *statement, Formals *scope) {
 				int offset = 16 + 8 * (scope->n - localVar->n);
 				printf("	lea %d(%%rbp), %%rsi\n", offset);
 			} else { // otherwise, use the global one's address
-				Formal *globalVar = addGlobalVar(statement->scanVar);
-				printf("	lea %s_var(%%rip), %%rsi\n", globalVar->name);
+				Formals *globalVar = addGlobalVar(statement->scanVar);
+				printf("	lea %s_var(%%rip), %%rsi\n", globalVar->first);
 			}
 
 			// if the stack isn't aligned, push 8 bytes
@@ -288,8 +322,8 @@ void genExpression(Expression *expression, Formals *scope) {
 				int offset = 16 + 8 * (scope->n - localVar->n);
 				printf("	push %d(%%rbp)\n", offset);
 			} else {
-				Formal *globalVar = addGlobalVar(expression->varName);
-				printf("	push %s_var(%%rip)\n", globalVar->name);
+				Formals *globalVar = addGlobalVar(expression->varName);
+				printf("	push %s_var(%%rip)\n", globalVar->first);
 			}
 
 			stackAligned = !stackAligned;
@@ -437,7 +471,7 @@ int main(int argc, char *argv[]) {
 	defaultReturn->returnValue->val = 0;
 
 	// parse the code
-	Funs *p = parse();
+	functions = parse();
 
 	// begin the .text section (code)
 	printf(".text\n");
@@ -455,7 +489,7 @@ int main(int argc, char *argv[]) {
 	printf("\n");
 
 	// generate all the function
-	FOREACH(p) genFun(__item->first);
+	FOREACH(functions) genFun(__item->first);
 
 	// begin the .data section (variables)
 	printf(".data\n");
@@ -465,8 +499,8 @@ int main(int argc, char *argv[]) {
 
 	// generate out allocations for all global vars and their names
 	FOREACH(globalScope) {
-		printf("	%s_var: .quad 0\n", __item->first->name);
-		printf("	%1$s_name: .string \"%1$s\"\n", __item->first->name);
+		printf("	%s_var: .quad 0\n", __item->first);
+		printf("	%1$s_name: .string \"%1$s\"\n", __item->first);
 	}
 
 	return 0;

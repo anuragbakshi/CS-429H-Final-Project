@@ -675,14 +675,9 @@ static Formals *formals(Fun *f) {
 
 	if (isId()) {
 		p = NEW(Formals);
-
-		Formal *var = NEW(Formal);
-		var->name = getId();
+		p->first = getId();
 		consume();
-		var->func = f;
-
 		p->n = 1;
-		p->first = var;
 		p->rest = 0;
 
 		if (isComma()) {
