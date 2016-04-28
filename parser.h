@@ -9,6 +9,9 @@ typedef struct Expression Expression;
 struct Statement;
 typedef struct Statement Statement;
 
+struct Fun;
+typedef struct Fun Fun;
+
 typedef struct Actuals {
 	int n;
 	Expression *first;
@@ -100,29 +103,41 @@ struct Statement {
 	};
 };
 
-typedef struct Statements {
-	Statement *first;
-	struct Statemens *rest;
-} Statements;
+typedef struct Formal {
+	char *name;
+	Fun *func;
+} Formal;
 
 typedef struct Formals {
 	int n;
-	char *first;
+	Formal *first;
+
 	struct Formals *rest;
 } Formals;
 
-typedef struct Fun {
+struct Fun {
 	char *name;
 	Formals *formals;
 	Statement *body;
-} Fun;
+};
 
 typedef struct Funs {
 	int n;
 	Fun *first;
+
 	struct Funs *rest;
 } Funs;
 
 extern Funs *parse();
+
+enum DKind {
+	dFun,
+	dStatement,
+	dExpression
+};
+
+typedef struct Dependency {
+
+} Dependency;
 
 #endif

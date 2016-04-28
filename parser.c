@@ -670,19 +670,24 @@ static Block *block(void) {
 }
 
 /* [<id> [, <formals>]] */
-static Formals *formals() {
+static Formals *formals(Fun *f) {
 	Formals *p = 0;
 
 	if (isId()) {
 		p = NEW(Formals);
-		p->first = getId();
+
+		Formal *var = NEW(Formal);
+		var->name = getId();
 		consume();
+		var->func = f;
+
 		p->n = 1;
+		p->first = var;
 		p->rest = 0;
 
 		if (isComma()) {
 			consume();
-			p->rest = formals();
+			p->rest = formals(f);
 			if (p->rest) {
 				p->n = p->rest->n + 1;
 			}
@@ -710,7 +715,7 @@ static Fun *fun() {
 		error();
 	consume();
 
-	p->formals = formals();
+	p->formals = formals(p);
 
 	if (!isRight())
 		error();

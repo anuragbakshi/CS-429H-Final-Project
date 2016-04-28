@@ -50,7 +50,7 @@ Formals *findNode(Formals *list, char *str) {
 	// iterate over each node in the list
 	while(current != NULL) {
 		// if the node's item matches the search item, return the current node
-		if(strcmp(current->first, str) == 0) {
+		if(strcmp(current->first->name, str) == 0) {
 			return current;
 		}
 
@@ -61,7 +61,7 @@ Formals *findNode(Formals *list, char *str) {
 	return NULL;
 }
 
-Formals *addGlobalVar(char *str) {
+Formal *addGlobalVar(char *str) {
 	// try finding the variable in the list
 	Formals *node = findNode(globalScope, str);
 	if(node == NULL) { // if it doesn't exist, add a new node to the beginning
@@ -74,15 +74,18 @@ Formals *addGlobalVar(char *str) {
 			new_node->n = globalScope->n + 1;
 		}
 
-		new_node->first = str;
+		new_node->first = calloc(1, sizeof(Formal));
+
+		new_node->first->name = str;
+		new_node->first->func = NULL;
 		new_node->rest = globalScope;
 
 		globalScope = new_node;
 	} else { // if it exists, return it
-		return node;
+		return node->first;
 	}
 
-	return globalScope;
+	return globalScope->first;
 }
 
 void genFun(Fun *);
@@ -125,8 +128,8 @@ void genStatement(Statement *statement, Formals *scope) {
 				int offset = 16 + 8 * (scope->n - localVar->n);
 				printf("	mov %%rax, %d(%%rbp)\n", offset);
 			} else { // otherwise, set the global one
-				Formals *globalVar = addGlobalVar(statement->assignName);
-				printf("	mov %%rax, %s_var(%%rip)\n", globalVar->first);
+				Formal *globalVar = addGlobalVar(statement->assignName);
+				printf("	mov %%rax, %s_var(%%rip)\n", globalVar->name);
 			}
 		} break;
 
@@ -169,8 +172,8 @@ void genStatement(Statement *statement, Formals *scope) {
 				int offset = 16 + 8 * (scope->n - localVar->n);
 				printf("	lea %d(%%rbp), %%rsi\n", offset);
 			} else { // otherwise, use the global one's address
-				Formals *globalVar = addGlobalVar(statement->scanVar);
-				printf("	lea %s_var(%%rip), %%rsi\n", globalVar->first);
+				Formal *globalVar = addGlobalVar(statement->scanVar);
+				printf("	lea %s_var(%%rip), %%rsi\n", globalVar->name);
 			}
 
 			// if the stack isn't aligned, push 8 bytes
@@ -285,8 +288,8 @@ void genExpression(Expression *expression, Formals *scope) {
 				int offset = 16 + 8 * (scope->n - localVar->n);
 				printf("	push %d(%%rbp)\n", offset);
 			} else {
-				Formals *globalVar = addGlobalVar(expression->varName);
-				printf("	push %s_var(%%rip)\n", globalVar->first);
+				Formal *globalVar = addGlobalVar(expression->varName);
+				printf("	push %s_var(%%rip)\n", globalVar->name);
 			}
 
 			stackAligned = !stackAligned;
@@ -462,8 +465,8 @@ int main(int argc, char *argv[]) {
 
 	// generate out allocations for all global vars and their names
 	FOREACH(globalScope) {
-		printf("	%s_var: .quad 0\n", __item->first);
-		printf("	%1$s_name: .string \"%1$s\"\n", __item->first);
+		printf("	%s_var: .quad 0\n", __item->first->name);
+		printf("	%1$s_name: .string \"%1$s\"\n", __item->first->name);
 	}
 
 	return 0;
