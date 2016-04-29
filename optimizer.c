@@ -18,20 +18,25 @@ void optimize() {
 	FOREACH(functions) resolveSideEffectsFun(__item->first);
 }
 
-void resolveSideEffectsFun(Fun *f) {
-	if(f->busy || f->sideEffects != NULL) {
+void resolveSideEffectsFun(Fun *function) {
+	if(function->busy || function->sideEffects != NULL) {
 		return;
 	}
 
-	f->busy = true;
+	function->busy = true;
 
-	resolveSideEffectsStatement(f->body, f->formals);
+	resolveSideEffectsStatement(function->body, function->formals);
 
-	SideEffects *s = (f->sideEffects = NEW(SideEffects));
+	SideEffects *s = (function->sideEffects = NEW(SideEffects));
+
+	s->parentKind = pFun;
+	s->fParent = function;
+
+	function->hasSideEffects |= function->body->hasSideEffects;
 	s->direct = false;
-	s->indirect = f->body->sideEffects;
+	s->indirect = function->body->sideEffects;
 
-	f->busy = false;
+	function->busy = false;
 }
 
 // void resolveSideEffectsActuals(Actuals *actuals) {
@@ -48,9 +53,12 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 	}
 
 	SideEffects *s = (statement->sideEffects = NEW(SideEffects));
+	s->parentKind = pStatement;
+	s->sParent = statement;
 
 	switch(statement->kind) {
 		case sAssignment: {
+			statement->hasSideEffects = true;
 			s->direct = true;
 			s->var = statement->assignName;
 
@@ -58,11 +66,16 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 			resolveSideEffectsExpression(e, scope);
 
 			s = (s->rest = NEW(SideEffects));
+
+			s->parentKind = pStatement;
+			s->sParent = statement;
+
 			s->direct = false;
 			s->indirect = e->sideEffects;
 		} break;
 
 		case sPrint: {
+			statement->hasSideEffects = true;
 			s->direct = true;
 			s->var = NULL;
 
@@ -70,11 +83,16 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 			resolveSideEffectsExpression(e, scope);
 
 			s = (s->rest = NEW(SideEffects));
+
+			s->parentKind = pStatement;
+			s->sParent = statement;
+
 			s->direct = false;
 			s->indirect = e->sideEffects;
 		} break;
 
 		case sScan: {
+			statement->hasSideEffects = true;
 			s->direct = true;
 			s->var = statement->scanVar;
 		} break;
@@ -83,6 +101,7 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 			Expression *e = statement->ifCondition;
 			resolveSideEffectsExpression(e, scope);
 
+			statement->hasSideEffects |= e->hasSideEffects;
 			s->direct = false;
 			s->indirect = e->sideEffects;
 
@@ -90,6 +109,11 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 			resolveSideEffectsStatement(thenStatement, scope);
 
 			s = (s->rest = NEW(SideEffects));
+
+			s->parentKind = pStatement;
+			s->sParent = statement;
+
+			statement->hasSideEffects |= thenStatement->hasSideEffects;
 			s->direct = false;
 			s->indirect = thenStatement->sideEffects;
 
@@ -98,6 +122,11 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 				resolveSideEffectsStatement(elseStatement, scope);
 
 				s = (s->rest = NEW(SideEffects));
+
+				s->parentKind = pStatement;
+				s->sParent = statement;
+
+				statement->hasSideEffects |= elseStatement->hasSideEffects;
 				s->direct = false;
 				s->indirect = elseStatement->sideEffects;
 			}
@@ -107,6 +136,7 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 			Expression *e = statement->whileCondition;
 			resolveSideEffectsExpression(e, scope);
 
+			statement->hasSideEffects |= e->hasSideEffects;
 			s->direct = false;
 			s->indirect = e->sideEffects;
 
@@ -114,6 +144,11 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 			resolveSideEffectsStatement(loopStatement, scope);
 
 			s = (s->rest = NEW(SideEffects));
+
+			s->parentKind = pStatement;
+			s->sParent = statement;
+
+			statement->hasSideEffects |= loopStatement->hasSideEffects;
 			s->direct = false;
 			s->indirect = loopStatement->sideEffects;
 		} break;
@@ -123,6 +158,7 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 			if(b != NULL && b->first != NULL) {
 				resolveSideEffectsStatement(b->first, scope);
 
+				statement->hasSideEffects |= b->first->hasSideEffects;
 				s->direct = false;
 				s->indirect = b->first->sideEffects;
 
@@ -130,6 +166,11 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 					resolveSideEffectsStatement(__item->first, scope);
 
 					s = (s->rest = NEW(SideEffects));
+
+					s->parentKind = pStatement;
+					s->sParent = statement;
+
+					statement->hasSideEffects |= __item->first->hasSideEffects;
 					s->direct = false;
 					s->indirect = __item->first->sideEffects;
 				}
@@ -137,6 +178,7 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 		} break;
 
 		case sReturn: {
+			statement->hasSideEffects = true;
 			s->direct = true;
 			s->var = NULL;
 
@@ -144,6 +186,11 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 			resolveSideEffectsExpression(e, scope);
 
 			s = (s->rest = NEW(SideEffects));
+
+			s->parentKind = pStatement;
+			s->sParent = statement;
+
+			statement->hasSideEffects |= e->hasSideEffects;
 			s->direct = false;
 			s->indirect = e->sideEffects;
 		} break;
@@ -151,16 +198,25 @@ void resolveSideEffectsStatement(Statement *statement, Formals *scope) {
 }
 
 void resolveSideEffectsExpression(Expression *expression, Formals *scope) {
-	if(expression->kind != eCALL || expression->sideEffects != NULL) {
+	if(expression->sideEffects != NULL) {
 		return;
 	}
 
 	SideEffects *s = (expression->sideEffects = NEW(SideEffects));
 
+	s->parentKind = pExpression;
+	s->eParent = expression;
+
+	if(expression->kind != eCALL) {
+		expression->hasSideEffects = false;
+		return;
+	}
+
 	Actuals *a = expression->callActuals;
 	if(a != NULL && a->first != NULL) {
 		resolveSideEffectsExpression(a->first, scope);
 
+		expression->hasSideEffects |= a->first->hasSideEffects;
 		s->direct = false;
 		s->indirect = a->first->sideEffects;
 
@@ -168,6 +224,11 @@ void resolveSideEffectsExpression(Expression *expression, Formals *scope) {
 			resolveSideEffectsExpression(__item->first, scope);
 
 			s = (s->rest = NEW(SideEffects));
+
+			s->parentKind = pExpression;
+			s->eParent = expression;
+
+			expression->hasSideEffects |= __item->first->hasSideEffects;
 			s->direct = false;
 			s->indirect = __item->first->sideEffects;
 		}
@@ -177,6 +238,11 @@ void resolveSideEffectsExpression(Expression *expression, Formals *scope) {
 	resolveSideEffectsFun(f);
 
 	s = (s->rest = NEW(SideEffects));
+
+	s->parentKind = pExpression;
+	s->eParent = expression;
+
+	expression->hasSideEffects |= f->hasSideEffects;
 	s->direct = false;
 	s->indirect = f->sideEffects;
 }

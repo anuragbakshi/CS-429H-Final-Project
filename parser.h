@@ -49,6 +49,8 @@ enum EKind {
 
 struct Expression {
 	enum EKind kind;
+
+	bool hasSideEffects;
 	SideEffects *sideEffects;
 
 	union {
@@ -69,6 +71,8 @@ struct Expression {
 typedef struct Block {
 	int n;
 	Statement *first;
+
+	bool hasSideEffects;
 	SideEffects *sideEffects;
 
 	struct Block *rest;
@@ -86,6 +90,8 @@ enum SKind {
 
 struct Statement {
 	enum SKind kind;
+
+	bool hasSideEffects;
 	SideEffects *sideEffects;
 
 	union {
@@ -120,6 +126,7 @@ typedef struct Fun {
 	Formals *formals;
 	Statement *body;
 
+	bool hasSideEffects;
 	SideEffects *sideEffects;
 	bool busy;
 } Fun;
@@ -127,6 +134,8 @@ typedef struct Fun {
 typedef struct Funs {
 	int n;
 	Fun *first;
+
+	bool hasSideEffects;
 	SideEffects *sideEffects;
 
 	struct Funs *rest;
@@ -134,8 +143,21 @@ typedef struct Funs {
 
 extern Funs *parse();
 
+enum PKind {
+	pExpression,
+	pStatement,
+	pFun
+};
+
 struct SideEffects {
 	bool direct;
+
+	enum PKind parentKind;
+	union {
+		Expression *eParent;
+		Statement *sParent;
+		Fun *fParent;
+	};
 
 	union {
 		char *var;
