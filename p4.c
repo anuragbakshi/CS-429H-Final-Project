@@ -3,7 +3,10 @@
 #include <stdbool.h>
 #include <string.h>
 #include <inttypes.h>
+
 #include "parser.h"
+#include "optimizer.h"
+#include "debug.h"
 
 /*
 REFERENCES:
@@ -30,9 +33,6 @@ https://sourceware.org/gdb/onlinedocs/gdb/TUI-Commands.html
 #define SCANF_NAME "scanf"
 #define MAIN_NAME "main"
 #endif
-
-// make iterating over linked lists easy
-#define FOREACH(START) for(typeof(*(START)) *__item = (START); __item != NULL; __item = __item->rest)
 
 // a list of all the global vars
 Formals *globalScope = NULL;
@@ -68,7 +68,8 @@ Formals *addGlobalVar(char *str) {
 	Formals *node = findNode(globalScope, str);
 	if(node == NULL) { // if it doesn't exist, add a new node to the beginning
 		// make a new node and put it on the head of the list
-		Formals *new_node = calloc(1, sizeof(Formals));
+		// Formals *new_node = calloc(1, sizeof(Formals));
+		Formals *new_node = NEW(Formals);
 
 		if(globalScope == NULL) {
 			new_node->n = 1;
@@ -85,41 +86,6 @@ Formals *addGlobalVar(char *str) {
 	}
 
 	return globalScope;
-}
-
-Fun *getFunByName(char *name) {
-	FOREACH(functions) {
-		if(strcmp(__item->first->name, name) == 0) {
-			return __item->first;
-		}
-	}
-
-	return NULL;
-}
-
-void resolveSideEffectsFun(Fun *);
-void resolveSideEffectsStatement(Statement *, Formals *);
-void resolveSideEffectsExpression(Expression *, Formals *);
-
-void resolveSideEffectsFun(Fun *f) {
-	if(f->busy || f->sideEffects != NULL) {
-		return;
-	}
-
-	f->busy = true;
-
-	f->busy = false;
-}
-
-void resolveSideEffectsStatement(Statement *s, Formals *scope) {
-}
-
-void resolveSideEffectsExpression(Expression *e, Formals *scope) {
-	if(e->kind != eCALL) {
-		return;
-	}
-
-
 }
 
 void genFun(Fun *);
@@ -463,15 +429,21 @@ void genExpression(Expression *expression, Formals *scope) {
 
 int main(int argc, char *argv[]) {
 	// set up the default return statement
-	defaultReturn = calloc(1, sizeof(Statement));
+	// defaultReturn = calloc(1, sizeof(Statement));
+	defaultReturn = NEW(Statement);
 	defaultReturn->kind = sReturn;
 
-	defaultReturn->returnValue = calloc(1, sizeof(Expression));
+	// defaultReturn->returnValue = calloc(1, sizeof(Expression));
+	defaultReturn->returnValue = NEW(Expression);
 	defaultReturn->returnValue->kind = eVAL;
 	defaultReturn->returnValue->val = 0;
 
 	// parse the code
 	functions = parse();
+	optimize();
+
+	printSideEffects(getFunByName("main")->sideEffects);
+	exit(1);
 
 	// begin the .text section (code)
 	printf(".text\n");

@@ -1,10 +1,9 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <setjmp.h>
 #include <string.h>
 #include "parser.h"
-
-#define NEW(typ) ((typ*)malloc(sizeof(typ)))
 
 /* Kinds of tokens */
 enum TKind {

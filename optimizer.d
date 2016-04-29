@@ -1,4 +1,4 @@
-p4.o: p4.c /usr/include/stdio.h /usr/include/sys/cdefs.h \
+optimizer.o: optimizer.c /usr/include/stdio.h /usr/include/sys/cdefs.h \
   /usr/include/sys/_symbol_aliasing.h \
   /usr/include/sys/_posix_availability.h /usr/include/Availability.h \
   /usr/include/AvailabilityInternal.h /usr/include/_types.h \
@@ -33,9 +33,8 @@ p4.o: p4.c /usr/include/stdio.h /usr/include/sys/cdefs.h \
   /usr/include/sys/_types/_ct_rune_t.h /usr/include/sys/_types/_rune_t.h \
   /usr/include/sys/_types/_wchar_t.h /usr/include/machine/types.h \
   /usr/include/i386/types.h /usr/include/sys/_types/_dev_t.h \
-  /usr/include/sys/_types/_mode_t.h \
-  /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/7.0.2/include/stdbool.h \
-  /usr/include/string.h /usr/include/sys/_types/_rsize_t.h \
-  /usr/include/sys/_types/_errno_t.h /usr/include/strings.h \
-  /usr/include/secure/_string.h /usr/include/inttypes.h parser.h \
-  optimizer.h debug.h
+  /usr/include/sys/_types/_mode_t.h /usr/include/string.h \
+  /usr/include/sys/_types/_rsize_t.h /usr/include/sys/_types/_errno_t.h \
+  /usr/include/strings.h /usr/include/secure/_string.h optimizer.h \
+  parser.h \
+  /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/7.0.2/include/stdbool.h

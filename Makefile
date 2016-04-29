@@ -3,6 +3,8 @@ PROGS=$(subst .fun,,$(TESTS))
 OUTS=$(patsubst %.fun,%.out,$(TESTS))
 DIFFS=$(patsubst %.fun,%.diff,$(TESTS))
 RESULTS=$(patsubst %.fun,%.result,$(TESTS))
+CFILES=$(wildcard *.c)
+OFILES=$(subst .c,.o,$(CFILES))
 
 .SECONDARY:
 
@@ -10,8 +12,8 @@ RESULTS=$(patsubst %.fun,%.result,$(TESTS))
 
 CFLAGS=-g -std=gnu99 -O0 -Werror -Wall
 
-p4 : p4.o parser.o Makefile
-	gcc $(CFLAGS) -o p4 p4.o parser.o
+pd : $(OFILES) Makefile
+	gcc $(CFLAGS) -o pd $(OFILES)
 
 %.o : %.c Makefile
 	gcc $(CFLAGS) -MD -c $*.c
@@ -19,9 +21,9 @@ p4 : p4.o parser.o Makefile
 %.o : %.S Makefile
 	gcc -MD -c $*.S
 
-%.S : %.fun p4
+%.S : %.fun pd
 	@echo "========== $* =========="
-	./p4 < $*.fun > $*.S
+	./pd < $*.fun > $*.S
 
 progs : $(PROGS)
 
@@ -50,7 +52,7 @@ clean :
 	rm -f *.out
 	rm -f *.d
 	rm -f *.o
-	rm -f p4
+	rm -f pd
 	rm -f *.diff
 
 -include *.d
