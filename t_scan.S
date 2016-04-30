@@ -9,9 +9,16 @@ _main:
 main_fun:
 	push %rbp
 	mov %rsp, %rbp
-	push $104
+	push $0
 	pop %rax
 	mov %rax, x_var(%rip)
+	push x_var(%rip)
+	lea printf_format(%rip), %rdi
+	pop %rsi
+	call _printf
+	lea scanf_format(%rip), %rdi
+	lea x_var(%rip), %rsi
+	call _scanf
 	push x_var(%rip)
 	lea printf_format(%rip), %rdi
 	pop %rsi
