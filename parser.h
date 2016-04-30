@@ -10,6 +10,22 @@ typedef struct Expression Expression;
 struct Statement;
 typedef struct Statement Statement;
 
+typedef struct Var {
+	char *name;
+	bool local;
+} Var;
+
+typedef struct Vars {
+	Var var;
+	struct Vars *next;
+} Vars;
+
+typedef struct Semantics {
+	Vars *modifies;
+	Vars *depends;
+	bool anchor;
+} Semantics;
+
 typedef struct Actuals {
 	int n;
 	Expression *first;
@@ -81,7 +97,7 @@ enum SKind {
 struct Statement {
 	enum SKind kind;
 	Semantics semantics;
-    union {
+	union {
 		struct {
 			char *assignName;
 			Expression *assignValue;
@@ -101,22 +117,6 @@ struct Statement {
 		Expression *returnValue;
 	};
 };
-
-typedef struct Semantics {
-    Vars *modifies;
-    Vars *depends;
-    bool anchor;
-}
-
-typedef struct Vars {
-    Var var;
-    Vars *next;
-}
-
-typedef struct Var {
-    char *name;
-    bool local;
-}
 
 typedef struct Statements {
 	Statement *first;
