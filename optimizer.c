@@ -1,5 +1,5 @@
 #include "optimizer.h"
 
-void optimize(Funs *funs) {
-	
+void optimize(Fun *function) {
+
 }

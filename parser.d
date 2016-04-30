@@ -36,4 +36,5 @@ parser.o: parser.c /usr/include/stdio.h /usr/include/sys/cdefs.h \
   /usr/include/sys/_types/_mode_t.h /usr/include/setjmp.h \
   /usr/include/string.h /usr/include/sys/_types/_rsize_t.h \
   /usr/include/sys/_types/_errno_t.h /usr/include/strings.h \
-  /usr/include/secure/_string.h parser.h
+  /usr/include/secure/_string.h parser.h \
+  /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/7.0.2/include/stdbool.h
