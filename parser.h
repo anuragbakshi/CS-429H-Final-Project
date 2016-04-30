@@ -2,6 +2,7 @@
 #define _PARSER_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 struct Expression;
 typedef struct Expression Expression;
@@ -79,7 +80,8 @@ enum SKind {
 
 struct Statement {
 	enum SKind kind;
-	union {
+	Semantics semantics;
+    union {
 		struct {
 			char *assignName;
 			Expression *assignValue;
@@ -99,6 +101,22 @@ struct Statement {
 		Expression *returnValue;
 	};
 };
+
+typedef struct Semantics {
+    Vars *modifies;
+    Vars *depends;
+    bool anchor;
+}
+
+typedef struct Vars {
+    Var var;
+    Vars *next;
+}
+
+typedef struct Var {
+    char *name;
+    bool local;
+}
 
 typedef struct Statements {
 	Statement *first;
