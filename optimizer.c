@@ -34,7 +34,7 @@ void add_expression(Vars *depends, Expression *assignValue) {
             v->name = assignValue->varName;
             v->local = 0; //for now
             add_var(&depends, *v);
-        }
+        } break;
         case ePLUS :
         case eMINUS :
         case eMUL :
@@ -161,13 +161,14 @@ void print_vars(Vars *v) {
     while(v != NULL) {
         if(v->first.local) printf("%s is local\n", v->first.name);
         else printf("%s is not local\n", v->first.name);
+        v = v->rest;
     }
 }
 
 void print_statement_semantics(Statement *s) {
     Statement *tempStatement;
     Block *tempBlock;
-    while(s != NULL) {
+    
         switch (s->kind) {
             case sBlock : {
                 printf("ENTERING BLOCK\n");
@@ -194,7 +195,7 @@ void print_statement_semantics(Statement *s) {
             if(s->semantics->anchor) printf("Is an anchor\n");
             }
         }
-    }
+    
 
 }
 
