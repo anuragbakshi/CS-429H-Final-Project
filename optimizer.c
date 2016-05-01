@@ -4,6 +4,11 @@
 #include "optimizer.h"
 #include "parser.h"
 
+#include <stdbool.h>
+#include <string.h>
+#include <inttypes.h>
+
+
 void assign_expression(Vars *depends, Expression *expression);
 void handle_statement(Statement *statement, Vars *legacy);
 
@@ -142,3 +147,61 @@ void optimize(Funs *funs) {
     find_semantics(funs, NEW(Vars));
     remove_code(funs);
 }
+
+void print_statement_semantics(Statement *s) {
+    Statement *tempStatement;
+    Block *tempBlock
+    while(s != NULL) {
+        switch (s->kind) {
+            case sBlock : {
+                printf("ENTERING BLOCK\n");
+                tempBlock = statement->block;
+                while(tempBlock != NULL) {
+                    print_statement_semantics(tempBlock->first);
+                    tempBlock = tempBlock->rest;
+                }
+            } break;
+            case sIf : {
+                printf("ENTERING IF\n");
+                printf("ENTERING IFTHEN\n");
+                print_statement_semantics(statement->ifThen);
+                printf("ENTERING IFELSE\n");
+                print_statement_semantics(statement->IFELSE);
+            } break;
+            case sWhile : {
+                printf("ENTERING WHILE\n");
+                print_statement_semantics(statement->whileBody);
+            } break;
+            default : {
+            print_vars(statement->semantics->modifies);
+            print_vars(statement->semantics->depends);
+            if(statement->semantics->anchor) printf("Is an anchor\n");
+            }
+        }
+    }
+    
+}
+
+void print_func_semantics(Fun *f) {
+    printf("PRINTING DEPENDANCIES FOR %s\n", f->name);
+    print_statement_semantics(f->body);
+}
+
+void print_semantics(Funs *funs) {
+    while(funs != NULL) {
+        print_func_semantics(funs->first);
+        funs = funs->next;
+    }
+}
+
+int main(int argc, char *argv[]) {
+
+    // parse the code
+    Funs *p = parse();
+
+    find_semantics(p);
+
+    print_semantics(p);
+
+    }
+
