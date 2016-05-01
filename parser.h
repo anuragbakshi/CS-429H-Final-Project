@@ -119,6 +119,7 @@ struct Statement {
 	Semantics *semantics;
 	bool needed;
     bool processed;
+    bool absolute;
     union {
 		struct {
 			char *assignName;
