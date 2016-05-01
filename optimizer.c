@@ -74,8 +74,8 @@ void remove_expression(Vars **legacy, Expression *expression) {
         case eNE :
         case eLT :
         case eGT : {
-            add_expression(depends, assignValue->left);
-            add_expression(depends, assignValue->right);
+            remove_expression(depends, assignValue->left);
+            remove_expression(depends, assignValue->right);
         } break;
 
         case eVAL : {
@@ -114,8 +114,8 @@ void handle_scan(Statement *statement, Vars *legacy) {
 
 void handle_if(Statement *statement, Vars *legacy) {
     add_expression(&legacy, statement->ifCondition);
-    handle_statement(statement->ifThen, legacy);
-    handle_statement(statement->ifElse, legacy);
+    if(statement->ifThen != NULL) handle_statement(statement->ifThen, legacy);
+    if(statement->ifElse != NULL) handle_statement(statement->ifElse, legacy);
     remove_expression(&legacy, statement->ifCondition);
 }
 
@@ -257,4 +257,4 @@ int main(int argc, char *argv[]) {
 	find_semantics(p, NULL);
 	print_semantics(p);
 
-	}
+}
