@@ -74,8 +74,8 @@ void remove_expression(Vars **legacy, Expression *expression) {
         case eNE :
         case eLT :
         case eGT : {
-            remove_expression(depends, assignValue->left);
-            remove_expression(depends, assignValue->right);
+            remove_expression(legacy, expression->left);
+            remove_expression(legacy, expression->right);
         } break;
 
         case eVAL : {
@@ -121,7 +121,7 @@ void handle_if(Statement *statement, Vars *legacy) {
 
 void handle_while(Statement *statement, Vars *legacy) {
 	add_expression(&legacy, statement->whileCondition);
-    handle_statement(statement->whileBody);
+    handle_statement(statement->whileBody, legacy);
     remove_expression(&legacy, statement->whileCondition);
 }
 
