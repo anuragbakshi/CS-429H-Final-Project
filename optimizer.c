@@ -45,7 +45,12 @@ void add_expression(Vars *depends, Expression *assignValue) {
         case eGT : {
             add_expression(depends, assignValue->left);
             add_expression(depends, assignValue->right);
-        }
+        } break;
+
+		case eVAL : {
+			return;
+		} break;
+
         default : {
             printf("not implemented something in add_expression\n");
             exit(1);
@@ -67,13 +72,13 @@ void handle_assignment(Statement *statement, Vars *legacy) {
 }
 
 void handle_print(Statement *statement, Vars *legacy) {
-    assignDepends(statement->semantics->depends, statement->assignValue, legacy);
+    assignDepends(statement->semantics->depends, statement->printValue, legacy);
     statement->semantics->anchor = true;
 }
 
 void handle_scan(Statement *statement, Vars *legacy) {
     statement->semantics->modifies->first.name = statement->scanVar;
-    assignDepends(statement->semantics->depends, statement->assignValue, legacy);
+    // assignDepends(statement->semantics->depends, statement->assignValue, legacy);
     statement->semantics->anchor = true;
 }
 
@@ -103,6 +108,10 @@ void handle_return(Statement *statement, Vars *legacy) {
 
 
 void handle_statement(Statement *statement, Vars *legacy) {
+	if(statement->semantics == NULL) {
+		statement->semantics = NEW(Semantics);
+	}
+
     Semantics *semantics = statement->semantics;
     semantics->modifies = NEW(Vars);
     semantics->modifies->first.local = false; // for now
