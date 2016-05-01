@@ -2,31 +2,38 @@
 #include "parser.h"
 
 void handle_assignment(statement) {
-	printf("not implemented everything yet assignment\n");	
+	printf("not implemented everything yet assignment\n");
+	exit(1);	
 }
 
 void handle_print(statement) {
-	printf("not implemented everything yet print\n");	
+	printf("not implemented everything yet print\n");
+	exit(1);	
 }
 
 void handle_scan(statement) {
-	printf("not implemented everything yet scan\n");	
+	printf("not implemented everything yet scan\n");
+	exit(1);	
 }
 
 void handle_if(statement) {
-	printf("not implemented everything yet if\n");	
+	printf("not implemented everything yet if\n");
+	exit(1);	
 }
 
 void handle_while(statement) {
-	printf("not implemented everything yet while\n");	
+	printf("not implemented everything yet while\n");
+	exit(1);	
 }
 
 void handle_block(statement) {
-	printf("not implemented everything yet block\n");	
+	printf("not implemented everything yet block\n");
+	exit(1);	
 }
 
 void handle_return(statement) {
-	printf("not implemented everything yet return\n");	
+	printf("not implemented everything yet return\n");
+	exit(1);	
 }
 
 
@@ -39,10 +46,10 @@ void handle_statement(Statement *statement) {
 		case sPrint : {
 			handle_print(statement);
 		} break;
-		case sScan(statement) : {
+		case sScan : {
 			handle_scan(statement);
 		} break;
-		case : {
+		case sIf :{
 			handle_if(statement);
 		} break;
 		case  sWhile : {
