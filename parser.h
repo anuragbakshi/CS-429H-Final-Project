@@ -102,7 +102,9 @@ enum SKind {
 struct Statement {
 	enum SKind kind;
 	Semantics *semantics;
-	union {
+	bool needed;
+    bool processed;
+    union {
 		struct {
 			char *assignName;
 			Expression *assignValue;
