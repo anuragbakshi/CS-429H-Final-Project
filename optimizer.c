@@ -4,10 +4,13 @@
 #include "optimizer.h"
 #include "parser.h"
 
+void assign_expression(Vars *depends, Expression *expression);
+void handle_statement(Statement *statement, Vars *legacy);
+
 void add_var(Vars **list, Var v) {
     Vars *new_node = NEW(Vars);
-    new_node->var = v;
-    new_node->next = *list;
+    new_node->first = v;
+    new_node->rest = *list;
 
     *list = new_node;
 }
@@ -21,8 +24,11 @@ void add_legacy(Vars *depends, Vars *legacy) {
 
 void add_expression(Vars *depends, Expression *assignValue) {
     switch(assignValue->kind) {
-        case eVar : {
-            add_var(&depends, assignValue->varName);
+        case eVAR : {
+            Var *v = NEW(Var);
+            v->name = assignValue->varName;
+            v->local = 0; //for now
+            add_var(&depends, *v);
         }
         case ePLUS :
         case eMINUS :
@@ -32,8 +38,8 @@ void add_expression(Vars *depends, Expression *assignValue) {
         case eNE :
         case eLT :
         case eGT : {
-            assign_expression(depends, assignValue->left);
-            assign_expression(depends, assignValue->right);
+            add_expression(depends, assignValue->left);
+            add_expression(depends, assignValue->right);
         }
         default : {
             printf("not implemented something in add_expression\n");
@@ -48,18 +54,20 @@ void assignDepends(Vars *depends, Expression *assignValue, Vars *legacy) {
 }
 
 void handle_assignment(Statement *statement, Vars *legacy) {
-    statement->semantics->modifies->name = statement->assignName;
+    statement->semantics->modifies = NEW(Vars);
+    Var *v = NEW(Var);
+    v->name = statement->assignName;
+    statement->semantics->modifies->first = *v;
     assignDepends(statement->semantics->depends, statement->assignValue, legacy);
 }
 
 void handle_print(Statement *statement, Vars *legacy) {
-    assignModifies(statement->semantics->depends, statement->assignValue, legacy);
+    assignDepends(statement->semantics->depends, statement->assignValue, legacy);
     statement->semantics->anchor = true;
 }
 
 void handle_scan(Statement *statement, Vars *legacy) {
-    Semantics semantics = statement->semantics;
-    semantics->modifies->var.name = statement->scanVar;
+    statement->semantics->modifies->first.name = statement->scanVar;
     assignDepends(statement->semantics->depends, statement->assignValue, legacy);
     statement->semantics->anchor = true;
 }
@@ -75,52 +83,53 @@ void handle_while(Statement *statement, Vars *legacy) {
 }
 
 void handle_block(Statement *statement, Vars *legacy) {
-    Block block = statement->block;
+    Block *block = statement->block;
     while(block != NULL) {
-        handle_statement(block->first);
+        handle_statement(block->first, legacy);
         block = block->rest;
     }
 }
 
-void handle_return(Statement *statement) {
+void handle_return(Statement *statement, Vars *legacy) {
     printf("not implemented everything yet return\n");
     exit(1);
 }
 
 
 
-void handle_statement(Statement *statement) {
+void handle_statement(Statement *statement, Vars *legacy) {
+    Semantics *semantics = statement->semantics;
     semantics->modifies = NEW(Vars);
-    semantics->modifies->var.local = false; // for now
+    semantics->modifies->first.local = false; // for now
     switch(statement->kind) {
         case sAssignment : {
-            handle_assignment(statement);
+            handle_assignment(statement, legacy);
         } break;
         case sPrint : {
-            handle_print(statement);
+            handle_print(statement, legacy);
         } break;
         case sScan : {
-            handle_scan(statement);
+            handle_scan(statement, legacy);
         } break;
         case sIf :{
-            handle_if(statement);
+            handle_if(statement, legacy);
         } break;
         case  sWhile : {
-            handle_while(statement);
+            handle_while(statement, legacy);
         } break;
         case sBlock : {
-            handle_block(statement);
+            handle_block(statement, legacy);
         } break;
         case sReturn : {
-            handle_return(statement);
+            handle_return(statement, legacy);
         }
     }
 }
 
-void find_semantics(Funs *funs) {
+void find_semantics(Funs *funs, Vars *legacy) {
     Fun function;
     while(funs != 0) {
-        handle_statement(funs->first->body);
+        handle_statement(funs->first->body, legacy);
         funs = funs->rest;
     }
 }
@@ -130,6 +139,6 @@ void remove_code(Funs *funs) {
 }
 
 void optimize(Funs *funs) {
-    find_semantics(funs);
+    find_semantics(funs, NEW(Vars));
     remove_code(funs);
 }
