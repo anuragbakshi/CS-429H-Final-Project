@@ -29,10 +29,10 @@ void add_legacy(Vars **depends, Vars *legacy) {
 void add_expression(Vars **depends, Expression *assignValue) {
 	switch(assignValue->kind) {
 		case eVAR : {
-			Var *v = NEW(Var);
-			v->name = assignValue->varName;
-			v->local = 0; //for now
-			add_var(depends, *v);
+			Var v;
+			v.name = assignValue->varName;
+			v.local = 0; //for now
+			add_var(depends, v);
 		} break;
 		case ePLUS :
 		case eMINUS :
@@ -110,9 +110,9 @@ void handle_statement(Statement *statement, Vars *legacy) {
 		statement->semantics = NEW(Semantics);
 	}
 
-	Semantics *semantics = statement->semantics;
-	semantics->modifies = NEW(Vars);
-	semantics->modifies->first.local = false; // for now
+	// Semantics *semantics = statement->semantics;
+	// semantics->modifies = NEW(Vars);
+	// semantics->modifies->first.local = false; // for now
 	switch(statement->kind) {
 		case sAssignment : {
 			handle_assignment(statement, legacy);
@@ -150,11 +150,15 @@ void remove_code(Funs *funs) {
 }
 
 void optimize(Funs *funs) {
-	find_semantics(funs, NEW(Vars));
+	find_semantics(funs, NULL);
 	remove_code(funs);
 }
 
 void print_vars(Vars *v) {
+	if(v == NULL) {
+		printf("\tNONE\n");
+	}
+
 	FOREACH(v) {
 		if(v->first.local) printf("\t%s is local\n", __item->first.name);
 		else printf("\t%s is not local\n", __item->first.name);
@@ -162,43 +166,43 @@ void print_vars(Vars *v) {
 }
 
 void print_statement_semantics(Statement *s) {
-    Statement *tempStatement;
-    Block *tempBlock;
+	Statement *tempStatement;
+	Block *tempBlock;
 
-        switch (s->kind) {
-            case sBlock : {
-                printf("ENTERING BLOCK\n");
-                tempBlock = s->block;
-                FOREACH(tempBlock) {
-                    print_statement_semantics(__item->first);
-                }
-            } break;
-            case sIf : {
-                printf("ENTERING IF\n");
-                printf("ENTERING IFTHEN\n");
-                print_statement_semantics(s->ifThen);
-                printf("ENTERING IFELSE\n");
-                print_statement_semantics(s->ifElse);
-            } break;
-            case sWhile : {
-                printf("ENTERING WHILE\n");
-                print_statement_semantics(s->whileBody);
-            } break;
-            default : {
-            printf("printing mods\n");
-            print_vars(s->semantics->modifies);
-            printf("printing depends\n");
-            print_vars(s->semantics->depends);
-            if(s->semantics->anchor) printf("Is an anchor\n");
+		switch (s->kind) {
+			case sBlock : {
+				printf("ENTERING BLOCK\n");
+				tempBlock = s->block;
+				FOREACH(tempBlock) {
+					print_statement_semantics(__item->first);
+				}
+			} break;
+			case sIf : {
+				printf("ENTERING IF\n");
+				printf("ENTERING IFTHEN\n");
+				print_statement_semantics(s->ifThen);
+				printf("ENTERING IFELSE\n");
+				print_statement_semantics(s->ifElse);
+			} break;
+			case sWhile : {
+				printf("ENTERING WHILE\n");
+				print_statement_semantics(s->whileBody);
+			} break;
+			default : {
+			printf("printing mods\n");
+			print_vars(s->semantics->modifies);
+			printf("printing depends\n");
+			print_vars(s->semantics->depends);
+			if(s->semantics->anchor) printf("Is an anchor\n");
 			printf("\n");
-            }
-        }
+			}
+		}
 
 
 }
 
 void print_func_semantics(Fun *f) {
-	printf("PRINTING DEPENDANCIES FOR %s\n", f->name);
+	printf("PRINTING DEPENDENCIES FOR %s\n", f->name);
 	print_statement_semantics(f->body);
 }
 
@@ -213,7 +217,7 @@ int main(int argc, char *argv[]) {
 	// parse the code
 	Funs *p = parse();
 
-	find_semantics(p, NEW(Vars));
+	find_semantics(p, NULL);
 
 	print_semantics(p);
 
