@@ -21,7 +21,7 @@
 #define STACK_POP(stack) ({ \
 	typeof(*(stack)) __top_node = *(stack); \
 	*(stack) = __top_node->rest; \
-	__top_node; \
+	__top_node->first; \
 })
 
 struct Expression;
@@ -36,7 +36,7 @@ typedef struct Var {
 } Var;
 
 typedef struct Vars {
-	Var first;
+	Var *first;
 	struct Vars *rest;
 } Vars;
 
@@ -143,7 +143,7 @@ struct Statement {
 
 typedef struct Statements {
 	Statement *first;
-	struct Statemens *rest;
+	struct Statements *rest;
 } Statements;
 
 typedef struct Formals {

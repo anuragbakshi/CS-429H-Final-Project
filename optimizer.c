@@ -20,6 +20,16 @@ void handle_statement(Statement *statement, Vars *legacy);
 // 	*list = new_node;
 // }
 
+bool contains_var(Vars *list, Var *v) {
+	FOREACH(list) {
+		if(strcmp(__item->first->name, v->name) == 0) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void add_legacy(Vars **depends, Vars *legacy) {
 	FOREACH(legacy) {
 		STACK_PUSH(depends, __item->first);
@@ -29,9 +39,9 @@ void add_legacy(Vars **depends, Vars *legacy) {
 void add_expression(Vars **depends, Expression *assignValue) {
 	switch(assignValue->kind) {
 		case eVAR : {
-			Var v;
-			v.name = assignValue->varName;
-			v.local = 0; //for now
+			Var *v = NEW(Var);
+			v->name = assignValue->varName;
+			v->local = 0; //for now
 			STACK_PUSH(depends, v);
 		} break;
 		case ePLUS :
@@ -98,7 +108,7 @@ void handle_assignment(Statement *statement, Vars *legacy) {
 	statement->semantics->modifies = NEW(Vars);
 	Var *v = NEW(Var);
 	v->name = statement->assignName;
-	statement->semantics->modifies->first = *v;
+	statement->semantics->modifies->first = v;
 	assignDepends(&statement->semantics->depends, statement->assignValue, legacy);
 }
 
@@ -108,7 +118,7 @@ void handle_print(Statement *statement, Vars *legacy) {
 }
 
 void handle_scan(Statement *statement, Vars *legacy) {
-	statement->semantics->modifies->first.name = statement->scanVar;
+	statement->semantics->modifies->first->name = statement->scanVar;
 	statement->semantics->anchor = true;
 }
 
@@ -171,15 +181,63 @@ void handle_statement(Statement *statement, Vars *legacy) {
 }
 
 void find_semantics(Funs *funs, Vars *legacy) {
-	Fun function;
+	// Fun function;
 	FOREACH(funs) {
 		handle_statement(__item->first->body, legacy);
 	}
 }
 
+void mark_needed(Vars *vars, Statements *statements) {
+	// recursively mark statements to keep
+	while(vars != NULL) {
+		Var *v = STACK_POP(&vars);
+		printf("%s\n", v->name);
+
+		// go through all previous statements
+		FOREACH(statements) {
+			// if it modifies a required var, mark all of its dependencies
+			if(contains_var(__item->first->semantics->modifies, v)) {
+				__item->first->needed = true;
+				mark_needed(__item->first->semantics->depends, __item);
+			}
+		}
+	}
+}
+
 void remove_code_function(Fun *fun) {
-	Statement *previous;
+	Statements *previous;
 	Vars *varStack;
+
+	// FOREACH(fun->body->block) {
+	// 	if(__item->first->semantics->anchor) {
+	// 		Vars *deps = __item->first->semantics->depends;
+	//
+	// 		while(deps != NULL) {
+	// 			STACK_PUSH(&varStack, deps->first);
+	// 			deps = deps->rest;
+	// 		}
+	// 	}
+	// }
+
+	FOREACH(fun->body->block) {
+		// anchor
+		if(__item->first->semantics->anchor) {
+			__item->first->needed = true;
+
+			Vars *deps = __item->first->semantics->depends;
+
+			// add all deps
+			while(deps != NULL) {
+				STACK_PUSH(&varStack, deps->first);
+				deps = deps->rest;
+			}
+
+			mark_needed(varStack, previous);
+		}
+
+		// add the current statement to the list of previous statements
+		STACK_PUSH(&previous, __item->first);
+	}
 }
 
 void remove_code(Funs *funs) {
@@ -199,13 +257,13 @@ void print_vars(Vars *v) {
 	}
 
 	FOREACH(v) {
-		if(v->first.local) printf("\t%s is local\n", __item->first.name);
-		else printf("\t%s is not local\n", __item->first.name);
+		if(v->first->local) printf("\t%s is local\n", __item->first->name);
+		else printf("\t%s is not local\n", __item->first->name);
 	}
 }
 
 void print_statement_semantics(Statement *s) {
-	Statement *tempStatement;
+	// Statement *tempStatement;
 	Block *tempBlock;
 
 		switch (s->kind) {
@@ -233,6 +291,7 @@ void print_statement_semantics(Statement *s) {
 			printf("printing depends\n");
 			print_vars(s->semantics->depends);
 			if(s->semantics->anchor) printf("Is an anchor\n");
+			if(s->needed) printf("Is needed\n");
 			printf("\n");
 			}
 		}
@@ -255,7 +314,8 @@ int main(int argc, char *argv[]) {
 
 	// parse the code
 	Funs *p = parse();
-	find_semantics(p, NULL);
+	// find_semantics(p, NULL);
+	optimize(p);
 	print_semantics(p);
 
 }
