@@ -156,8 +156,8 @@ void optimize(Funs *funs) {
 
 void print_vars(Vars *v) {
 	FOREACH(v) {
-		if(v->first.local) printf("%s is local\n", __item->first.name);
-		else printf("%s is not local\n", __item->first.name);
+		if(v->first.local) printf("\t%s is local\n", __item->first.name);
+		else printf("\t%s is not local\n", __item->first.name);
 	}
 }
 
@@ -185,12 +185,12 @@ void print_statement_semantics(Statement *s) {
                 print_statement_semantics(s->whileBody);
             } break;
             default : {
-            printf(" printing mods\n");
+            printf("printing mods\n");
             print_vars(s->semantics->modifies);
             printf("printing depends\n");
             print_vars(s->semantics->depends);
-            printf("\n");
             if(s->semantics->anchor) printf("Is an anchor\n");
+			printf("\n");
             }
         }
 
