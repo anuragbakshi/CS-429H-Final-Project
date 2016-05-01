@@ -59,8 +59,6 @@ void handle_print(Statement *statement, Vars *legacy) {
 
 void handle_scan(Statement *statement, Vars *legacy) {
     Semantics semantics = statement->semantics;
-    semantics->modifies = NEW(Vars);
-    semantics->modifies->var.local = false; // for now
     semantics->modifies->var.name = statement->scanVar;
     assignDepends(statement->semantics->depends, statement->assignValue, legacy);
     statement->semantics->anchor = true;
@@ -92,6 +90,8 @@ void handle_return(Statement *statement) {
 
 
 void handle_statement(Statement *statement) {
+    semantics->modifies = NEW(Vars);
+    semantics->modifies->var.local = false; // for now
     switch(statement->kind) {
         case sAssignment : {
             handle_assignment(statement);
