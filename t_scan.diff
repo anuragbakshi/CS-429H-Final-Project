@@ -1,5 +1,1 @@
-===> t_scan ... fail
------ expected ------
------ found -----
-0
-1
+===> t_scan ... pass
