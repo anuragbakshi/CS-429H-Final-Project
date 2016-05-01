@@ -21,8 +21,8 @@ typedef struct Var {
 } Var;
 
 typedef struct Vars {
-	Var var;
-	struct Vars *next;
+	Var first;
+	struct Vars *rest;
 } Vars;
 
 typedef struct Semantics {
