@@ -82,13 +82,16 @@ void handle_scan(Statement *statement, Vars *legacy) {
 }
 
 void handle_if(Statement *statement, Vars *legacy) {
-	printf("not implemented everything yet if\n");
-	exit(1);
+    add_expression(&legacy, statement->ifCondition);
+    handle_statement(statement->ifThen, legacy);
+    handle_statement(statement->ifElse, legacy);
+    remove_expression(&legacy, statement->ifCondition);
 }
 
 void handle_while(Statement *statement, Vars *legacy) {
-	printf("not implemented everything yet while\n");
-	exit(1);
+	add_expression(&legacy, statement->whileCondition);
+    handle_statement(statement->whileBody);
+    remove_expression(&legacy, statement->whileCondition);
 }
 
 void handle_block(Statement *statement, Vars *legacy) {
