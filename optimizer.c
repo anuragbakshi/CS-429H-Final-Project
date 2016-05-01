@@ -4,8 +4,6 @@
 #include "optimizer.h"
 #include "parser.h"
 
-#define NULL 0
-
 void add_var(Vars **list, Var v) {
 	Vars *new_node = NEW(Vars);
 	new_node->var = v;
@@ -15,7 +13,7 @@ void add_var(Vars **list, Var v) {
 }
 
 void assignModifies(Vars depends, assignValue, legacy) {
-	
+
 }
 
 void handle_assignment(Statement *statement, Vars *legacy) {
@@ -24,13 +22,23 @@ void handle_assignment(Statement *statement, Vars *legacy) {
 }
 
 void handle_print(Statement *statement, Vars *legacy) {
-	printf("not implemented everything yet print\n");
-	exit(1);
+	// printf("not implemented everything yet print\n");
+	// exit(1);
+
+	assignModifies(statement->semantics->depends, statement->assignValue, legacy);
+	statement->semantics->anchor = true;
 }
 
 void handle_scan(Statement *statement, Vars *legacy) {
-	printf("not implemented everything yet scan\n");
-	exit(1);
+	// printf("not implemented everything yet scan\n");
+	// exit(1);
+
+	statement->semantics->modifies = NEW(Vars);
+	statement->semantics->modifies->var.local = false; // for now
+	statement->semantics->modifies->var.name = statement->scanVar;
+
+	assignModifies(statement->semantics->depends, statement->assignValue, legacy);
+	statement->semantics->anchor = true;
 }
 
 void handle_if(Statement *statement, Vars *legacy) {
