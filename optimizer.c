@@ -4,6 +4,8 @@
 #include "optimizer.h"
 #include "parser.h"
 
+#define NULL 0
+
 void handle_assignment(Statement *statement, Vars *legacy) {
 	printf("not implemented everything yet assignment\n");
 	exit(1);
@@ -30,8 +32,11 @@ void handle_while(Statement *statement, Vars *legacy) {
 }
 
 void handle_block(Statement *statement, Vars *legacy) {
-	
-	exit(1);
+	Block block = statement->block;
+	while(block != NULL) {
+		handle_statement(block->first);
+		block = block->rest;
+	}
 }
 
 void handle_return(Statement *statement) {
