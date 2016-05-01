@@ -212,9 +212,7 @@ int main(int argc, char *argv[]) {
 
 	// parse the code
 	Funs *p = parse();
-
 	find_semantics(p, NEW(Vars));
-
 	print_semantics(p);
 
 	}
