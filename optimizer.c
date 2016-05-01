@@ -179,7 +179,7 @@ void print_statement_semantics(Statement *s) {
             }
         }
     }
-    
+
 }
 
 void print_func_semantics(Fun *f) {
@@ -204,4 +204,3 @@ int main(int argc, char *argv[]) {
     print_semantics(p);
 
     }
-
