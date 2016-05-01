@@ -14,13 +14,13 @@ void add_var(Vars **list, Var v) {
 	*list = new_node;
 }
 
-void assignModifies(Vars depends, assignValue, legacy) {
-	
+void assignDepends(Vars *depends, assignName, Vars *legacy) {
+
 }
 
 void handle_assignment(Statement *statement, Vars *legacy) {
 	statement->semantics->modifies->name = statement->assignName;
-	assignModifies(statement->semantics->depends, statement->assignValue, legacy);
+	assignDepends(statement->semantics->depends, statement->assignValue, legacy);
 }
 
 void handle_print(Statement *statement, Vars *legacy) {
