@@ -3,6 +3,6 @@
 
 #include "parser.h"
 
-extern void optimize(Fun *);
+extern void optimize(Funs *);
 
 #endif

@@ -1,39 +1,42 @@
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "optimizer.h"
 #include "parser.h"
 
-void handle_assignment(statement) {
+void handle_assignment(Statement *statement) {
 	printf("not implemented everything yet assignment\n");
-	exit(1);	
+	exit(1);
 }
 
-void handle_print(statement) {
+void handle_print(Statement *statement) {
 	printf("not implemented everything yet print\n");
-	exit(1);	
+	exit(1);
 }
 
-void handle_scan(statement) {
+void handle_scan(Statement *statement) {
 	printf("not implemented everything yet scan\n");
-	exit(1);	
+	exit(1);
 }
 
-void handle_if(statement) {
+void handle_if(Statement *statement) {
 	printf("not implemented everything yet if\n");
-	exit(1);	
+	exit(1);
 }
 
-void handle_while(statement) {
+void handle_while(Statement *statement) {
 	printf("not implemented everything yet while\n");
-	exit(1);	
+	exit(1);
 }
 
-void handle_block(statement) {
+void handle_block(Statement *statement) {
 	printf("not implemented everything yet block\n");
-	exit(1);	
+	exit(1);
 }
 
-void handle_return(statement) {
+void handle_return(Statement *statement) {
 	printf("not implemented everything yet return\n");
-	exit(1);	
+	exit(1);
 }
 
 
@@ -70,6 +73,10 @@ void find_semantics(Funs *funs) {
 		handle_statement(funs->first->body);
 		funs = funs->rest;
 	}
+}
+
+void remove_code(Funs *funs) {
+
 }
 
 void optimize(Funs *funs) {
