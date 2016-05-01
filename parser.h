@@ -96,7 +96,7 @@ enum SKind {
 
 struct Statement {
 	enum SKind kind;
-	Semantics semantics;
+	Semantics *semantics;
 	union {
 		struct {
 			char *assignName;

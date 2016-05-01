@@ -6,9 +6,21 @@
 
 #define NULL 0
 
+void add_var(Vars **list, Var v) {
+	Vars *new_node = NEW(Vars);
+	new_node->var = v;
+	new_node->next = *list;
+
+	*list = new_node;
+}
+
+void assignModifies(Vars depends, assignValue, legacy) {
+	
+}
+
 void handle_assignment(Statement *statement, Vars *legacy) {
-	printf("not implemented everything yet assignment\n");
-	exit(1);
+	statement->semantics->modifies->name = statement->assignName;
+	assignModifies(statement->semantics->depends, statement->assignValue, legacy);
 }
 
 void handle_print(Statement *statement, Vars *legacy) {
