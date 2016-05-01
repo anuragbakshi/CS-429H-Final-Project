@@ -12,9 +12,39 @@ void add_var(Vars **list, Var v) {
     *list = new_node;
 }
 
+void add_legacy(Vars *depends, Vars *legacy) {
+    while(legacy != NULL) {
+        add_var(&depends, legacy->first);
+        legacy = legacy->rest;
+    }
+}
 
-void assignDepends(Vars *depends, assignName, Vars *legacy) {
-    
+void add_expression(Vars *depends, Expression *assignValue) {
+    switch(assignValue->kind) {
+        case eVar : {
+            add_var(&depends, assignValue->varName);
+        }
+        case ePLUS :
+        case eMINUS :
+        case eMUL :
+        case eDIV :
+        case eEQ :
+        case eNE :
+        case eLT :
+        case eGT : {
+            assign_expression(depends, assignValue->left);
+            assign_expression(depends, assignValue->right);
+        }
+        default : {
+            printf("not implemented something in add_expression\n");
+            exit(1);
+        }
+    }
+}
+
+void assignDepends(Vars *depends, Expression *assignValue, Vars *legacy) {
+    add_legacy(depends, legacy);
+    add_expression(depends, assignValue);
 }
 
 void handle_assignment(Statement *statement, Vars *legacy) {
