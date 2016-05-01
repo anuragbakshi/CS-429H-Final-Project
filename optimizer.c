@@ -148,14 +148,21 @@ void optimize(Funs *funs) {
     remove_code(funs);
 }
 
+void print_vars(Vars *v) {
+    while(v != NULL) {
+        if(v->first.local) printf("%s is local\n", v->first.name);
+        else printf("%s is not local\n", v->first.name);
+    }
+}
+
 void print_statement_semantics(Statement *s) {
     Statement *tempStatement;
-    Block *tempBlock
+    Block *tempBlock;
     while(s != NULL) {
         switch (s->kind) {
             case sBlock : {
                 printf("ENTERING BLOCK\n");
-                tempBlock = statement->block;
+                tempBlock = s->block;
                 while(tempBlock != NULL) {
                     print_statement_semantics(tempBlock->first);
                     tempBlock = tempBlock->rest;
@@ -164,18 +171,18 @@ void print_statement_semantics(Statement *s) {
             case sIf : {
                 printf("ENTERING IF\n");
                 printf("ENTERING IFTHEN\n");
-                print_statement_semantics(statement->ifThen);
+                print_statement_semantics(s->ifThen);
                 printf("ENTERING IFELSE\n");
-                print_statement_semantics(statement->IFELSE);
+                print_statement_semantics(s->ifElse);
             } break;
             case sWhile : {
                 printf("ENTERING WHILE\n");
-                print_statement_semantics(statement->whileBody);
+                print_statement_semantics(s->whileBody);
             } break;
             default : {
-            print_vars(statement->semantics->modifies);
-            print_vars(statement->semantics->depends);
-            if(statement->semantics->anchor) printf("Is an anchor\n");
+            print_vars(s->semantics->modifies);
+            print_vars(s->semantics->depends);
+            if(s->semantics->anchor) printf("Is an anchor\n");
             }
         }
     }
@@ -190,7 +197,7 @@ void print_func_semantics(Fun *f) {
 void print_semantics(Funs *funs) {
     while(funs != NULL) {
         print_func_semantics(funs->first);
-        funs = funs->next;
+        funs = funs->rest;
     }
 }
 
@@ -199,7 +206,7 @@ int main(int argc, char *argv[]) {
     // parse the code
     Funs *p = parse();
 
-    find_semantics(p);
+    find_semantics(p, NEW(Vars));
 
     print_semantics(p);
 
