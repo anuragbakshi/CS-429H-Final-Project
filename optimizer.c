@@ -115,6 +115,7 @@ void handle_scan(Statement *statement, Vars *legacy) {
 void handle_if(Statement *statement, Vars *legacy) {
     add_expression(&legacy, statement->ifCondition);
     if(statement->ifThen != NULL) handle_statement(statement->ifThen, legacy);
+    printf("The ifelse is %d", (int)(statement->ifElse));
     if(statement->ifElse != NULL) handle_statement(statement->ifElse, legacy);
     remove_expression(&legacy, statement->ifCondition);
 }
@@ -211,9 +212,9 @@ void print_statement_semantics(Statement *s) {
 			case sIf : {
 				printf("ENTERING IF\n");
 				printf("ENTERING IFTHEN\n");
-				print_statement_semantics(s->ifThen);
+				if(s->ifThen != NULL) print_statement_semantics(s->ifThen);
 				printf("ENTERING IFELSE\n");
-				print_statement_semantics(s->ifElse);
+                if(s->ifElse != NULL) print_statement_semantics(s->ifElse);
 			} break;
 			case sWhile : {
 				printf("ENTERING WHILE\n");
