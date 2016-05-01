@@ -57,6 +57,38 @@ void add_expression(Vars **depends, Expression *assignValue) {
 	}
 }
 
+void remove_var(Vars **legacy) {
+    *legacy = (*legacy)->rest;
+}
+
+void remove_expression(Vars **legacy, Expression *expression) {
+    switch(expression->kind) {
+        case eVAR : {
+            remove_var(legacy);
+        } break;
+        case ePLUS :
+        case eMINUS :
+        case eMUL :
+        case eDIV :
+        case eEQ :
+        case eNE :
+        case eLT :
+        case eGT : {
+            add_expression(depends, assignValue->left);
+            add_expression(depends, assignValue->right);
+        } break;
+
+        case eVAL : {
+            return;
+        } break;
+
+        default : {
+            printf("not implemented something in add_expression\n");
+            exit(1);
+        }
+    }
+}
+
 void assignDepends(Vars **depends, Expression *assignValue, Vars *legacy) {
 	add_legacy(depends, legacy);
 	add_expression(depends, assignValue);
@@ -77,18 +109,20 @@ void handle_print(Statement *statement, Vars *legacy) {
 
 void handle_scan(Statement *statement, Vars *legacy) {
 	statement->semantics->modifies->first.name = statement->scanVar;
-	// assignDepends(statement->semantics->depends, statement->assignValue, legacy);
 	statement->semantics->anchor = true;
 }
 
 void handle_if(Statement *statement, Vars *legacy) {
-	printf("not implemented everything yet if\n");
-	exit(1);
+    add_expression(&legacy, statement->ifCondition);
+    handle_statement(statement->ifThen, legacy);
+    handle_statement(statement->ifElse, legacy);
+    remove_expression(&legacy, statement->ifCondition);
 }
 
 void handle_while(Statement *statement, Vars *legacy) {
-	printf("not implemented everything yet while\n");
-	exit(1);
+	add_expression(&legacy, statement->whileCondition);
+    handle_statement(statement->whileBody);
+    remove_expression(&legacy, statement->whileCondition);
 }
 
 void handle_block(Statement *statement, Vars *legacy) {
@@ -110,9 +144,6 @@ void handle_statement(Statement *statement, Vars *legacy) {
 		statement->semantics = NEW(Semantics);
 	}
 
-	// Semantics *semantics = statement->semantics;
-	// semantics->modifies = NEW(Vars);
-	// semantics->modifies->first.local = false; // for now
 	switch(statement->kind) {
 		case sAssignment : {
 			handle_assignment(statement, legacy);
