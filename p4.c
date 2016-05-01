@@ -31,9 +31,6 @@ https://sourceware.org/gdb/onlinedocs/gdb/TUI-Commands.html
 #define MAIN_NAME "main"
 #endif
 
-// make iterating over linked lists easy
-#define FOREACH(START) for(typeof(*(START)) *__item = (START); __item != NULL; __item = __item->rest)
-
 // a list of all the global vars
 Formals *globalScope = NULL;
 // statement that returns 0 (added to the end of all methods)

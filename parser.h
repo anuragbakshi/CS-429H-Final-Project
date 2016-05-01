@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define NEW(typ) ((typ*)calloc(1, sizeof(typ)))
+
+// make iterating over linked lists easy
+#define FOREACH(START) for(typeof(*(START)) *__item = (START); __item != NULL; __item = __item->rest)
+
 struct Expression;
 typedef struct Expression Expression;
 

@@ -4,8 +4,6 @@
 #include <string.h>
 #include "parser.h"
 
-#define NEW(typ) ((typ*)malloc(sizeof(typ)))
-
 /* Kinds of tokens */
 enum TKind {
 	tNONE,
