@@ -21,9 +21,8 @@ void add_var(Vars **list, Var v) {
 }
 
 void add_legacy(Vars *depends, Vars *legacy) {
-    while(legacy != NULL) {
-        add_var(&depends, legacy->first);
-        legacy = legacy->rest;
+    FOREACH(legacy) {
+        add_var(&depends, __item->first);
     }
 }
 
@@ -94,9 +93,8 @@ void handle_while(Statement *statement, Vars *legacy) {
 
 void handle_block(Statement *statement, Vars *legacy) {
     Block *block = statement->block;
-    while(block != NULL) {
-        handle_statement(block->first, legacy);
-        block = block->rest;
+    FOREACH(block) {
+        handle_statement(__item->first, legacy);
     }
 }
 
@@ -142,9 +140,8 @@ void handle_statement(Statement *statement, Vars *legacy) {
 
 void find_semantics(Funs *funs, Vars *legacy) {
     Fun function;
-    while(funs != 0) {
-        handle_statement(funs->first->body, legacy);
-        funs = funs->rest;
+    FOREACH(funs) {
+        handle_statement(__item->first->body, legacy);
     }
 }
 
@@ -158,24 +155,22 @@ void optimize(Funs *funs) {
 }
 
 void print_vars(Vars *v) {
-    while(v != NULL) {
-        if(v->first.local) printf("%s is local\n", v->first.name);
-        else printf("%s is not local\n", v->first.name);
-        v = v->rest;
+    FOREACH(v) {
+        if(v->first.local) printf("%s is local\n", __item->first.name);
+        else printf("%s is not local\n", __item->first.name);
     }
 }
 
 void print_statement_semantics(Statement *s) {
     Statement *tempStatement;
     Block *tempBlock;
-    
+
         switch (s->kind) {
             case sBlock : {
                 printf("ENTERING BLOCK\n");
                 tempBlock = s->block;
-                while(tempBlock != NULL) {
-                    print_statement_semantics(tempBlock->first);
-                    tempBlock = tempBlock->rest;
+                FOREACH(tempBlock) {
+                    print_statement_semantics(__item->first);
                 }
             } break;
             case sIf : {
@@ -198,7 +193,7 @@ void print_statement_semantics(Statement *s) {
             if(s->semantics->anchor) printf("Is an anchor\n");
             }
         }
-    
+
 
 }
 
@@ -208,9 +203,8 @@ void print_func_semantics(Fun *f) {
 }
 
 void print_semantics(Funs *funs) {
-    while(funs != NULL) {
-        print_func_semantics(funs->first);
-        funs = funs->rest;
+    FOREACH(funs) {
+        print_func_semantics(__item->first);
     }
 }
 
