@@ -190,8 +190,11 @@ void print_statement_semantics(Statement *s) {
                 print_statement_semantics(s->whileBody);
             } break;
             default : {
+            printf(" printing mods\n");
             print_vars(s->semantics->modifies);
+            printf("printing depends\n");
             print_vars(s->semantics->depends);
+            printf("\n");
             if(s->semantics->anchor) printf("Is an anchor\n");
             }
         }
