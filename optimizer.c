@@ -4,33 +4,33 @@
 #include "optimizer.h"
 #include "parser.h"
 
-void handle_assignment(Statement *statement) {
+void handle_assignment(Statement *statement, Vars *legacy) {
 	printf("not implemented everything yet assignment\n");
 	exit(1);
 }
 
-void handle_print(Statement *statement) {
+void handle_print(Statement *statement, Vars *legacy) {
 	printf("not implemented everything yet print\n");
 	exit(1);
 }
 
-void handle_scan(Statement *statement) {
+void handle_scan(Statement *statement, Vars *legacy) {
 	printf("not implemented everything yet scan\n");
 	exit(1);
 }
 
-void handle_if(Statement *statement) {
+void handle_if(Statement *statement, Vars *legacy) {
 	printf("not implemented everything yet if\n");
 	exit(1);
 }
 
-void handle_while(Statement *statement) {
+void handle_while(Statement *statement, Vars *legacy) {
 	printf("not implemented everything yet while\n");
 	exit(1);
 }
 
-void handle_block(Statement *statement) {
-	printf("not implemented everything yet block\n");
+void handle_block(Statement *statement, Vars *legacy) {
+	
 	exit(1);
 }
 
