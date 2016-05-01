@@ -9,6 +9,21 @@
 // make iterating over linked lists easy
 #define FOREACH(START) for(typeof(*(START)) *__item = (START); __item != NULL; __item = __item->rest)
 
+// void (list<T> **, T *)
+#define STACK_PUSH(stack, item) ({ \
+	typeof(*(stack)) __new_node = NEW(typeof(**(stack))); \
+	__new_node->first = (item); \
+	__new_node->rest = *(stack); \
+	*(stack) = __new_node; \
+})
+
+// T *(list<T> **)
+#define STACK_POP(stack) ({ \
+	typeof(*(stack)) __top_node = *(stack); \
+	*(stack) = __top_node->rest; \
+	__top_node; \
+})
+
 struct Expression;
 typedef struct Expression Expression;
 

@@ -12,17 +12,17 @@
 void assign_expression(Vars *depends, Expression *expression);
 void handle_statement(Statement *statement, Vars *legacy);
 
-void add_var(Vars **list, Var v) {
-	Vars *new_node = NEW(Vars);
-	new_node->first = v;
-	new_node->rest = *list;
-
-	*list = new_node;
-}
+// void add_var(Vars **list, Var v) {
+// 	Vars *new_node = NEW(Vars);
+// 	new_node->first = v;
+// 	new_node->rest = *list;
+//
+// 	*list = new_node;
+// }
 
 void add_legacy(Vars **depends, Vars *legacy) {
 	FOREACH(legacy) {
-		add_var(depends, __item->first);
+		STACK_PUSH(depends, __item->first);
 	}
 }
 
@@ -32,7 +32,7 @@ void add_expression(Vars **depends, Expression *assignValue) {
 			Var v;
 			v.name = assignValue->varName;
 			v.local = 0; //for now
-			add_var(depends, v);
+			STACK_PUSH(depends, v);
 		} break;
 		case ePLUS :
 		case eMINUS :
@@ -145,8 +145,15 @@ void find_semantics(Funs *funs, Vars *legacy) {
 	}
 }
 
-void remove_code(Funs *funs) {
+void remove_code_function(Fun *fun) {
+	Statement *previous;
+	Vars *varStack;
+}
 
+void remove_code(Funs *funs) {
+	FOREACH(funs) {
+		remove_code_function(__item->first);
+	}
 }
 
 void optimize(Funs *funs) {
