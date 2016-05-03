@@ -219,20 +219,25 @@ void remove_code_function(Fun *fun) {
 	// 	}
 	// }
 
+	if(fun->body->kind != sBlock) {
+		fun->body->needed = fun->body->semantics->anchor;
+		return;
+	}
+
 	FOREACH(fun->body->block) {
 		// anchor
 		if(__item->first->semantics->anchor) {
 			__item->first->needed = true;
 
-			Vars *deps = __item->first->semantics->depends;
+			// Vars *deps = __item->first->semantics->depends;
 
 			// add all deps
-			while(deps != NULL) {
-				STACK_PUSH(&varStack, deps->first);
-				deps = deps->rest;
-			}
+			// while(deps != NULL) {
+			// 	STACK_PUSH(&varStack, deps->first);
+			// 	deps = deps->rest;
+			// }
 
-			mark_needed(varStack, previous);
+			mark_needed(__item->first->semantics->depends, previous);
 		}
 
 		// add the current statement to the list of previous statements
