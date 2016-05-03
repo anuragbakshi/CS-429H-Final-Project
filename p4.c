@@ -24,10 +24,12 @@ https://sourceware.org/gdb/onlinedocs/gdb/TUI-Commands.html
 #ifdef __APPLE__
 #define PRINTF_NAME "_printf"
 #define SCANF_NAME "_scanf"
+#define CALLOC_NAME "_calloc"
 #define MAIN_NAME "_main"
 #else
 #define PRINTF_NAME "printf"
 #define SCANF_NAME "scanf"
+#define CALLOC_NAME "calloc"
 #define MAIN_NAME "main"
 #endif
 
@@ -40,6 +42,9 @@ Statement *defaultReturn = NULL;
 bool stackAligned = false;
 // used to generate unique labels
 int labelCounter = 0;
+
+// all the functions in the program
+Statements *closures;
 
 /* finds the node with the specified item */
 Formals *findNode(Formals *list, char *str) {
@@ -89,6 +94,15 @@ void genSaveResult();
 void genEvalBoolean();
 void genExpression(Expression *, Formals *);
 
+void genAssignment(Statement *, Formals *);
+void genPrint(Statement *, Formals *);
+void genScan(Statement *, Formals *);
+void genBind(Statement *, Formals *);
+void genIf(Statement *, Formals *);
+void genWhile(Statement *, Formals *);
+void genBlock(Statement *, Formals *);
+void genReturn(Statement *, Formals *);
+
 void genFun(Fun *function) {
 	// stack is misaligned at the beginning of a function
 	stackAligned = false;
@@ -110,144 +124,35 @@ void genFun(Fun *function) {
 void genStatement(Statement *statement, Formals *scope) {
 	switch(statement->kind) {
 		case sAssignment: {
-			// see if a local var with that name exists
-			Formals *localVar = findNode(scope, statement->assignName);
-
-			// generate the RHS and load it into %rax
-			genExpression(statement->assignValue, scope);
-			printf("	pop %%rax\n");
-			stackAligned = !stackAligned;
-
-			if(localVar != NULL) { // if there is a local var, set that
-				int offset = 16 + 8 * (scope->n - localVar->n);
-				printf("	mov %%rax, %d(%%rbp)\n", offset);
-			} else { // otherwise, set the global one
-				Formals *globalVar = addGlobalVar(statement->assignName);
-				printf("	mov %%rax, %s_var(%%rip)\n", globalVar->first);
-			}
+			genAssignment(statement, scope);
 		} break;
 
 		case sPrint: {
-			// generate the value being printed
-			genExpression(statement->printValue, scope);
-
-			// load the arguments for printf
-			printf("	lea printf_format(%%rip), %%rdi\n");
-			printf("	pop %%rsi\n");
-			stackAligned = !stackAligned;
-
-			// if the stack isn't aligned, push 8 bytes
-			if(!stackAligned) {
-				printf("	sub $8, %%rsp\n");
-			}
-
-			// make the actual call to printf
-			printf("	call %s\n", PRINTF_NAME);
-
-			// if we had pushed to align, pop to restore the correct stack
-			if(!stackAligned) {
-				printf("	add $8, %%rsp\n");
-			}
+			genPrint(statement, scope);
 		} break;
 
 		case sScan: {
-			// generate the value being printed
-			// genExpression(statement->printValue, scope);
+			genScan(statement, scope);
+		} break;
 
-			// load the arguments for scanf
-			printf("	lea scanf_format(%%rip), %%rdi\n");
-			// printf("	pop %%rsi\n");
-			// stackAligned = !stackAligned;
-
-			// see if a local var with that name exists
-			Formals *localVar = findNode(scope, statement->scanVar);
-
-			if(localVar != NULL) { // if there is a local var, get its address
-				int offset = 16 + 8 * (scope->n - localVar->n);
-				printf("	lea %d(%%rbp), %%rsi\n", offset);
-			} else { // otherwise, use the global one's address
-				Formals *globalVar = addGlobalVar(statement->scanVar);
-				printf("	lea %s_var(%%rip), %%rsi\n", globalVar->first);
-			}
-
-			// if the stack isn't aligned, push 8 bytes
-			if(!stackAligned) {
-				printf("	sub $8, %%rsp\n");
-			}
-
-			// make the actual call to scanf
-			printf("	call %s\n", SCANF_NAME);
-
-			// if we had pushed to align, pop to restore the correct stack
-			if(!stackAligned) {
-				printf("	add $8, %%rsp\n");
-			}
+		case sBind: {
+			genBind(statement, scope);
 		} break;
 
 		case sIf: {
-			int labelNum = labelCounter++;
-
-			// generate the condition and set flags accordingly
-			genExpression(statement->ifCondition, scope);
-			genEvalBoolean();
-
-			bool currentAligned = stackAligned;
-			// if false, go to the else part
-			printf("	je else_%d\n", labelNum);
-
-			// if true, continue to the then part
-			genStatement(statement->ifThen, scope);
-			// after running the then part, skip the else
-			printf("	jmp after_%d\n", labelNum);
-
-			stackAligned = currentAligned;
-			// generate the else part, if there is one
-			printf("	else_%d:\n", labelNum);
-			if(statement->ifElse != NULL) {
-				genStatement(statement->ifElse, scope);
-			}
-
-			// put the after label after the whole construct
-			stackAligned = currentAligned;
-			printf("	after_%d:\n", labelNum);
+			genIf(statement, scope);
 		} break;
 
-		case sWhile:{
-			int labelNum = labelCounter++;
-			// label the beginning of the loop
-			printf("	loop_%d:\n", labelNum);
-
-			// generate the condition and set flags accordingly
-			genExpression(statement->whileCondition, scope);
-			genEvalBoolean();
-
-			// if false, skip the loop body
-			printf("	je after%d\n", labelNum);
-
-			genStatement(statement->whileBody, scope);
-			// go back to the beginning
-			printf("	jmp loop_%d\n", labelNum);
-			// put the after label after the whole construct
-			printf("	after%d:\n", labelNum);
+		case sWhile: {
+			genWhile(statement, scope);
 		} break;
 
 		case sBlock: {
-			// generate all the statements in the block
-			FOREACH(statement->block) genStatement(__item->first, scope);
+			genBlock(statement, scope);
 		} break;
 
 		case sReturn: {
-			// generate the value being returned and put it into %rax
-			genExpression(statement->returnValue, scope);
-			printf("	pop %%rax\n");
-			stackAligned = !stackAligned;
-
-			// reset the stack pointers
-			printf("	mov %%rbp, %%rsp\n");
-			printf("	pop %%rbp\n");
-			stackAligned = !stackAligned;
-
-			printf("	ret\n");
+			genReturn(statement, scope);
 		} break;
 	}
 }
@@ -391,7 +296,7 @@ void genExpression(Expression *expression, Formals *scope) {
 			// calculate the alignment after pushing args
 			bool currentAligned = stackAligned;
 			if(expression->callActuals != NULL) {
-				currentAligned ^= expression->callActuals->n & 1;
+				currentAligned ^= LIST_LEN(expression->callActuals) & 1;
 			}
 
 			// add padding if necessary
@@ -421,6 +326,155 @@ void genExpression(Expression *expression, Formals *scope) {
 	}
 }
 
+void genAssignment(Statement *statement, Formals *scope) {
+	// see if a local var with that name exists
+	Formals *localVar = findNode(scope, statement->assignName);
+
+	// generate the RHS and load it into %rax
+	genExpression(statement->assignValue, scope);
+	printf("	pop %%rax\n");
+	stackAligned = !stackAligned;
+
+	if(localVar != NULL) { // if there is a local var, set that
+		int offset = 16 + 8 * (scope->n - localVar->n);
+		printf("	mov %%rax, %d(%%rbp)\n", offset);
+	} else { // otherwise, set the global one
+		Formals *globalVar = addGlobalVar(statement->assignName);
+		printf("	mov %%rax, %s_var(%%rip)\n", globalVar->first);
+	}
+}
+
+void genPrint(Statement *statement, Formals *scope) {
+	// generate the value being printed
+	genExpression(statement->printValue, scope);
+
+	// load the arguments for printf
+	printf("	lea printf_format(%%rip), %%rdi\n");
+	printf("	pop %%rsi\n");
+	stackAligned = !stackAligned;
+
+	// if the stack isn't aligned, push 8 bytes
+	if(!stackAligned) {
+		printf("	sub $8, %%rsp\n");
+	}
+
+	// make the actual call to printf
+	printf("	call %s\n", PRINTF_NAME);
+
+	// if we had pushed to align, pop to restore the correct stack
+	if(!stackAligned) {
+		printf("	add $8, %%rsp\n");
+	}
+}
+
+void genScan(Statement *statement, Formals *scope) {
+	// generate the value being printed
+	// genExpression(statement->printValue, scope);
+
+	// load the arguments for scanf
+	printf("	lea scanf_format(%%rip), %%rdi\n");
+	// printf("	pop %%rsi\n");
+	// stackAligned = !stackAligned;
+
+	// see if a local var with that name exists
+	Formals *localVar = findNode(scope, statement->scanVar);
+
+	if(localVar != NULL) { // if there is a local var, get its address
+		int offset = 16 + 8 * (scope->n - localVar->n);
+		printf("	lea %d(%%rbp), %%rsi\n", offset);
+	} else { // otherwise, use the global one's address
+		Formals *globalVar = addGlobalVar(statement->scanVar);
+		printf("	lea %s_var(%%rip), %%rsi\n", globalVar->first);
+	}
+
+	// if the stack isn't aligned, push 8 bytes
+	if(!stackAligned) {
+		printf("	sub $8, %%rsp\n");
+	}
+
+	// make the actual call to scanf
+	printf("	call %s\n", SCANF_NAME);
+
+	// if we had pushed to align, pop to restore the correct stack
+	if(!stackAligned) {
+		printf("	add $8, %%rsp\n");
+	}
+}
+
+void genBind(Statement *statement, Formals *scope) {
+	// push arguments onto stack
+	uint64_t numArgs = LIST_LEN(statement->closureActuals);
+	FOREACH(statement->closureActuals) {
+		genExpression(__item->first, scope);
+	}
+}
+
+void genIf(Statement *statement, Formals *scope) {
+	int labelNum = labelCounter++;
+
+	// generate the condition and set flags accordingly
+	genExpression(statement->ifCondition, scope);
+	genEvalBoolean();
+
+	bool currentAligned = stackAligned;
+	// if false, go to the else part
+	printf("	je else_%d\n", labelNum);
+
+	// if true, continue to the then part
+	genStatement(statement->ifThen, scope);
+	// after running the then part, skip the else
+	printf("	jmp after_%d\n", labelNum);
+
+	stackAligned = currentAligned;
+	// generate the else part, if there is one
+	printf("	else_%d:\n", labelNum);
+	if(statement->ifElse != NULL) {
+		genStatement(statement->ifElse, scope);
+	}
+
+	// put the after label after the whole construct
+	stackAligned = currentAligned;
+	printf("	after_%d:\n", labelNum);
+}
+
+void genWhile(Statement *statement, Formals *scope) {
+	int labelNum = labelCounter++;
+	// label the beginning of the loop
+	printf("	loop_%d:\n", labelNum);
+
+	// generate the condition and set flags accordingly
+	genExpression(statement->whileCondition, scope);
+	genEvalBoolean();
+
+	// if false, skip the loop body
+	printf("	je after%d\n", labelNum);
+
+	genStatement(statement->whileBody, scope);
+	// go back to the beginning
+	printf("	jmp loop_%d\n", labelNum);
+	// put the after label after the whole construct
+	printf("	after%d:\n", labelNum);
+}
+
+void genBlock(Statement *statement, Formals *scope) {
+	// generate all the statements in the block
+	FOREACH(statement->block) genStatement(__item->first, scope);
+}
+
+void genReturn(Statement *statement, Formals *scope) {
+	// generate the value being returned and put it into %rax
+	genExpression(statement->returnValue, scope);
+	printf("	pop %%rax\n");
+	stackAligned = !stackAligned;
+
+	// reset the stack pointers
+	printf("	mov %%rbp, %%rsp\n");
+	printf("	pop %%rbp\n");
+	stackAligned = !stackAligned;
+
+	printf("	ret\n");
+}
+
 int main(int argc, char *argv[]) {
 	// set up the default return statement
 	defaultReturn = calloc(1, sizeof(Statement));
@@ -431,6 +485,7 @@ int main(int argc, char *argv[]) {
 	defaultReturn->returnValue->val = 0;
 
 	// parse the code
+	// funs = parse();
 	Funs *p = parse();
 
 	// begin the .text section (code)

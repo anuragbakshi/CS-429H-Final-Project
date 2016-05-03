@@ -24,6 +24,12 @@
 	__top_node->first; \
 })
 
+#define LIST_LEN(list) ({ \
+	uint64_t __len = 0; \
+	FOREACH(list) ++__len; \
+	__len; \
+})
+
 struct Expression;
 typedef struct Expression Expression;
 
@@ -108,6 +114,7 @@ enum SKind {
 	sAssignment,
 	sPrint,
 	sScan,
+	sBind,
 	sIf,
 	sWhile,
 	sBlock,
@@ -125,17 +132,27 @@ struct Statement {
 			char *assignName;
 			Expression *assignValue;
 		};
+
 		Expression *printValue;
 		char *scanVar;
+
+		struct {
+			char *closureName;
+			char *closureFunName;
+			Actuals *closureActuals;
+		};
+
 		struct {
 			Expression *ifCondition;
 			Statement *ifThen;
 			Statement *ifElse;
 		};
+
 		struct {
 			Expression *whileCondition;
 			Statement *whileBody;
 		};
+
 		Block *block;
 		Expression *returnValue;
 	};
@@ -163,6 +180,19 @@ typedef struct Funs {
 	Fun *first;
 	struct Funs *rest;
 } Funs;
+
+typedef struct Closure {
+	struct {
+		char *name;
+		char *funName;
+		// uint64_t *args;
+	};
+} Closure;
+
+typedef struct Closures {
+	Closure *first;
+	struct Closures *rest;
+} Closures;
 
 extern Funs *parse();
 

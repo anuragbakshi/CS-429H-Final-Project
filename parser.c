@@ -4,6 +4,15 @@
 #include <string.h>
 #include "parser.h"
 
+/*
+New syntax:
+scan [var]
+bind [closure], [fun], ([args...])
+
+async [handle], [fun]
+await [retval], [handle]
+*/
+
 /* Kinds of tokens */
 enum TKind {
 	tNONE,
@@ -29,6 +38,7 @@ enum TKind {
 	tNE,
 	tPRINT,
 	tSCAN,
+	tBIND,
 	tFUN,
 	tCOMMA,
 	tRETURN
@@ -102,6 +112,7 @@ static void peekId(void) {
 		const int c = peekChar();
 		switch (c) {
 		case 'a' ... 'z':
+		case '_':
 		case '0' ... '9':
 			consumeChar();
 			len++;
@@ -120,6 +131,8 @@ static void peekId(void) {
 				current.kind = tPRINT;
 			} else if (strcmp(current.ptr, "scan") == 0) {
 				current.kind = tSCAN;
+			} else if (strcmp(current.ptr, "bind") == 0) {
+				current.kind = tBIND;
 			} else if (strcmp(current.ptr, "fun") == 0) {
 				current.kind = tFUN;
 			} else if (strcmp(current.ptr, "return") == 0) {
@@ -155,6 +168,7 @@ static void peek() {
 				peekInt();
 				return;
 			case 'a' ... 'z':
+			case '_':
 				peekId();
 				return;
 			case '(':
@@ -222,7 +236,7 @@ static void peek() {
 				consumeChar();
 				break;
 			default:
-				printf("undefined char %d\n", c);
+				printf("undefined char %1$c (%1$d)\n", c);
 				error();
 			}
 		}
@@ -266,6 +280,11 @@ static int isPrint() {
 static int isScan() {
 	peek();
 	return current.kind == tSCAN;
+}
+
+static int isBind() {
+	peek();
+	return current.kind == tBIND;
 }
 
 static int isIf() {
@@ -606,6 +625,50 @@ static Statement *statement(void) {
 			error();
 
 		p->scanVar = getId();
+		consume();
+
+		if (isSemi()) {
+			consume();
+		}
+
+		return p;
+	} else if (isBind()) {
+		Statement *p = NEW(Statement);
+		p->kind = sBind;
+
+		consume();
+
+		// get closure name
+		if(!isId())
+			error();
+
+		p->closureName = getId();
+		consume();
+
+		if(!isComma())
+			error();
+		consume();
+
+		// get fun name
+		if(!isId())
+			error();
+
+		p->closureFunName = getId();
+		consume();
+
+		if(!isComma())
+			error();
+		consume();
+
+		// get args to bind
+		if(!isLeft())
+			error();
+		consume();
+
+		p->closureActuals = actuals();
+
+		if(!isRight())
+			error();
 		consume();
 
 		if (isSemi()) {
