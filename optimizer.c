@@ -208,17 +208,6 @@ void remove_code_function(Fun *fun) {
 	Statements *previous;
 	Vars *varStack;
 
-	// FOREACH(fun->body->block) {
-	// 	if(__item->first->semantics->anchor) {
-	// 		Vars *deps = __item->first->semantics->depends;
-	//
-	// 		while(deps != NULL) {
-	// 			STACK_PUSH(&varStack, deps->first);
-	// 			deps = deps->rest;
-	// 		}
-	// 	}
-	// }
-
 	FOREACH(fun->body->block) {
 		// anchor
 		if(__item->first->semantics->anchor) {
@@ -240,9 +229,28 @@ void remove_code_function(Fun *fun) {
 	}
 }
 
+Statements *make_stack(Fun *fun) {
+	Statements *stack = NEW(Statements);
+	Statement *statement = fun->body->first;
+	while(statement != NULL) {
+		Statement *s = NEW(Statement);
+		
+	}
+}
+
+void remove_from_function(Fun *fun) {
+	if(fun->body->kind == sBlock) {
+		Vars *v = NEW(Vars);
+		Statements *body = make_stack(fun);
+		cull_stack(&body);
+		free(v);
+	}
+}
+
 void remove_code(Funs *funs) {
-	FOREACH(funs) {
-		remove_code_function(__item->first);
+	while(funs != NULL) {
+		remove_from_function(funs->first);
+		funs = funs->rest;
 	}
 }
 
