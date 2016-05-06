@@ -634,6 +634,7 @@ static Statement *statement(void) {
 		return p;
 	} else if (isBind()) {
 		Statement *p = NEW(Statement);
+		p->closure = NEW(Closure);
 		p->kind = sBind;
 
 		consume();
@@ -642,7 +643,7 @@ static Statement *statement(void) {
 		if(!isId())
 			error();
 
-		p->closureName = getId();
+		p->closure->name = getId();
 		consume();
 
 		if(!isComma())
@@ -653,7 +654,7 @@ static Statement *statement(void) {
 		if(!isId())
 			error();
 
-		p->closureFunName = getId();
+		p->closure->funName = getId();
 		consume();
 
 		if(!isComma())
@@ -666,6 +667,7 @@ static Statement *statement(void) {
 		consume();
 
 		p->closureActuals = actuals();
+		p->closure->numArgs = (p->closureActuals != NULL) ? p->closureActuals->n : 0;
 
 		if(!isRight())
 			error();

@@ -25,11 +25,13 @@ https://sourceware.org/gdb/onlinedocs/gdb/TUI-Commands.html
 #define PRINTF_NAME "_printf"
 #define SCANF_NAME "_scanf"
 #define CALLOC_NAME "_calloc"
+#define MEMCPY_NAME "_memcpy"
 #define MAIN_NAME "_main"
 #else
 #define PRINTF_NAME "printf"
 #define SCANF_NAME "scanf"
 #define CALLOC_NAME "calloc"
+#define MEMCPY_NAME "memcpy"
 #define MAIN_NAME "main"
 #endif
 
@@ -44,7 +46,8 @@ bool stackAligned = false;
 int labelCounter = 0;
 
 // all the functions in the program
-Statements *closures;
+Funs *funs;
+Closures *closures;
 
 /* finds the node with the specified item */
 Formals *findNode(Formals *list, char *str) {
@@ -87,8 +90,21 @@ Formals *addGlobalVar(char *str) {
 	return globalScope;
 }
 
+Fun *getFunByName(char *funName) {
+	FOREACH(funs) if(strcmp(__item->first->name, funName) == 0) return __item->first;
+
+	return NULL;
+}
+
+Closure *getClosureByName(char *closureName) {
+	FOREACH(closures) if(strcmp(__item->first->name, closureName) == 0) return __item->first;
+
+	return NULL;
+}
+
 void genFun(Fun *);
 void genStatement(Statement *, Formals *);
+void genActuals(Actuals *, Formals *);
 void genLoadOperands();
 void genSaveResult();
 void genEvalBoolean();
@@ -120,6 +136,91 @@ void genFun(Fun *function) {
 
 	printf("\n");
 }
+
+void genClosure(Closure *closure) {
+	// stack is misaligned at the beginning of a function
+	stackAligned = false;
+
+	// calls a fun or another closure
+	size_t funArgs = 0;
+
+	Fun *function = getFunByName(closure->funName);
+	if(function != NULL) {
+		funArgs = (function->formals != NULL) ? function->formals->n : 0;
+	} else {
+		Closure *other = getClosureByName(closure->funName);
+		funArgs = other->numArgs;
+	}
+
+	// create the label and save the previous base pointer
+	printf("%s_fun:\n", closure->name);
+	printf("	push %%rbp\n");
+	stackAligned = !stackAligned;
+	// set the base pointer to after existing data
+	printf("	mov %%rsp, %%rbp\n");
+
+	// calculate the alignment after pushing args
+	bool currentAligned = stackAligned ^ (closure->numArgs & 1);
+	// if(expression->callActuals != NULL) {
+	// 	currentAligned ^= LIST_LEN(expression->callActuals) & 1;
+	// }
+
+	// add padding if necessary
+	if(!currentAligned) {
+		printf("	sub $8, %%rsp\n");
+	}
+
+	// push arguments onto stack
+	// TODO: check for callee saved registers
+	size_t argsSize = (funArgs - closure->numArgs) * 8;
+
+	// allocate space for the args
+	printf("	sub %lu, %%rsp\n", argsSize);
+
+	// copy them using memcpy
+	printf("	lea %lu(%%rsp), %%rdi\n", argsSize);
+	printf("	lea %s_closure_data(%%rip), %%rsi\n", closure->name);
+	printf("	mov %lu, %%rdx\n", argsSize);
+
+	// if the stack isn't aligned, push 8 bytes
+	if(!stackAligned) {
+		printf("	sub $8, %%rsp\n");
+	}
+
+	// make the actual call to memcpy
+	printf("	call %s\n", MEMCPY_NAME);
+
+	// if we had pushed to align, pop to restore the correct stack
+	if(!stackAligned) {
+		printf("	add $8, %%rsp\n");
+	}
+
+	// call the function
+	printf("	call %s_fun\n", closure->funName);
+
+	// remove the padding if we added it
+	if(!currentAligned) {
+		printf("	add $8, %%rsp\n");
+	}
+
+	stackAligned = currentAligned;
+
+	// // push return value onto stack
+	// printf("	push %%rax\n");
+	// stackAligned = !stackAligned;
+
+	// // generate the body and add the default return statement
+	// genStatement(function->body, function->formals);
+	// genStatement(defaultReturn, function->formals);
+
+	printf("	ret\n");
+
+	printf("\n");
+}
+
+// void genClosureData(Closure *closure) {
+// 	// TODO
+// }
 
 void genStatement(Statement *statement, Formals *scope) {
 	switch(statement->kind) {
@@ -154,6 +255,12 @@ void genStatement(Statement *statement, Formals *scope) {
 		case sReturn: {
 			genReturn(statement, scope);
 		} break;
+	}
+}
+
+void genActuals(Actuals *actuals, Formals *scope) {
+	FOREACH(actuals) {
+		genExpression(__item->first, scope);
 	}
 }
 
@@ -305,9 +412,7 @@ void genExpression(Expression *expression, Formals *scope) {
 			}
 
 			// push arguments onto stack
-			FOREACH(expression->callActuals) {
-				genExpression(__item->first, scope);
-			}
+			genActuals(expression->callActuals, scope);
 
 			// call the function
 			printf("	call %s_fun\n", expression->callName);
@@ -402,11 +507,37 @@ void genScan(Statement *statement, Formals *scope) {
 }
 
 void genBind(Statement *statement, Formals *scope) {
+	bool argsAligned = stackAligned;
+
 	// push arguments onto stack
-	uint64_t numArgs = LIST_LEN(statement->closureActuals);
-	FOREACH(statement->closureActuals) {
-		genExpression(__item->first, scope);
+	size_t numArgs = LIST_LEN(statement->closureActuals);
+	size_t argsSize = numArgs * 8;
+	genActuals(statement->closureActuals, scope);
+
+	// TODO: check for callee saved registers
+	// load the arguments for memcpy
+	printf("	lea %s_closure_data(%%rip), %%rdi\n", statement->closure->name);
+	printf("	lea %lu(%%rsp), %%rsi\n", argsSize);
+	printf("	mov %lu, %%rdx\n", argsSize);
+
+	// if the stack isn't aligned, push 8 bytes
+	if(!stackAligned) {
+		printf("	sub $8, %%rsp\n");
 	}
+
+	// make the actual call to memcpy
+	printf("	call %s\n", MEMCPY_NAME);
+
+	// if we had pushed to align, pop to restore the correct stack
+	if(!stackAligned) {
+		printf("	add $8, %%rsp\n");
+	}
+
+	// remove the closure args from the stack
+	printf("	add %lu, %%rsp\n", argsSize);
+	stackAligned = argsAligned;
+
+	STACK_PUSH(&closures, statement->closure);
 }
 
 void genIf(Statement *statement, Formals *scope) {
@@ -485,8 +616,8 @@ int main(int argc, char *argv[]) {
 	defaultReturn->returnValue->val = 0;
 
 	// parse the code
-	// funs = parse();
-	Funs *p = parse();
+	funs = parse();
+	// Funs *p = parse();
 
 	// begin the .text section (code)
 	printf(".text\n");
@@ -496,6 +627,7 @@ int main(int argc, char *argv[]) {
 	// declare printf
 	printf("	.extern %s\n", PRINTF_NAME);
 	printf("	.extern %s\n", SCANF_NAME);
+	printf("	.extern %s\n", MEMCPY_NAME);
 	printf("\n");
 
 	// generate the program entry point
@@ -504,7 +636,8 @@ int main(int argc, char *argv[]) {
 	printf("\n");
 
 	// generate all the function
-	FOREACH(p) genFun(__item->first);
+	FOREACH(funs) genFun(__item->first);
+	FOREACH(closures) genClosure(__item->first);
 
 	// begin the .data section (variables)
 	printf(".data\n");
@@ -512,10 +645,16 @@ int main(int argc, char *argv[]) {
 	printf("	printf_format: .string \"%%d\\n\"\n");
 	printf("	scanf_format: .string \"%%d\"\n");
 
-	// generate out allocations for all global vars and their names
+	// generate allocations for all global vars and their names
 	FOREACH(globalScope) {
 		printf("	%s_var: .quad 0\n", __item->first);
-		printf("	%1$s_name: .string \"%1$s\"\n", __item->first);
+		// printf("	%1$s_name: .string \"%1$s\"\n", __item->first);
+	}
+
+	// generate allocations for all closure data
+	// FOREACH(closures) genClosureData(__item->first);
+	FOREACH(closures) {
+		printf("	%s_closure_data: .zero %lu\n", __item->first->name, __item->first->numArgs * 8);
 	}
 
 	return 0;

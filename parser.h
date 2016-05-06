@@ -1,6 +1,7 @@
 #ifndef _PARSER_H_
 #define _PARSER_H_
 
+#include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -25,7 +26,7 @@
 })
 
 #define LIST_LEN(list) ({ \
-	uint64_t __len = 0; \
+	size_t __len = 0; \
 	FOREACH(list) ++__len; \
 	__len; \
 })
@@ -45,6 +46,19 @@ typedef struct Vars {
 	Var *first;
 	struct Vars *rest;
 } Vars;
+
+typedef struct Closure {
+	struct {
+		char *name;
+		char *funName;
+		size_t numArgs;
+	};
+} Closure;
+
+typedef struct Closures {
+	Closure *first;
+	struct Closures *rest;
+} Closures;
 
 typedef struct Semantics {
 	Vars *modifies;
@@ -137,8 +151,7 @@ struct Statement {
 		char *scanVar;
 
 		struct {
-			char *closureName;
-			char *closureFunName;
+			Closure *closure;
 			Actuals *closureActuals;
 		};
 
@@ -180,19 +193,6 @@ typedef struct Funs {
 	Fun *first;
 	struct Funs *rest;
 } Funs;
-
-typedef struct Closure {
-	struct {
-		char *name;
-		char *funName;
-		// uint64_t *args;
-	};
-} Closure;
-
-typedef struct Closures {
-	Closure *first;
-	struct Closures *rest;
-} Closures;
 
 extern Funs *parse();
 
