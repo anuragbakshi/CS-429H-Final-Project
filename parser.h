@@ -25,10 +25,31 @@
 	__top_node->first; \
 })
 
+// size_t (list<T> *)
 #define LIST_LEN(list) ({ \
 	size_t __len = 0; \
 	FOREACH(list) ++__len; \
 	__len; \
+})
+
+// void (list<T> **)
+#define LIST_REVERSE(list) ({ \
+	typeof(*(list)) __node = (*list); \
+	typeof(*(list)) __next = NULL; \
+	typeof(*(list)) __prev = NULL; \
+\
+	size_t __n = 1; \
+	while(__node != NULL) { \
+		__next = __node->rest; \
+		__node->rest = __prev; \
+		__node->n = __n; \
+\
+		__prev = __node; \
+		__node = __next; \
+		++__n; \
+	} \
+\
+	*list = __prev; \
 })
 
 struct Expression;

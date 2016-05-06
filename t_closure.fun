@@ -28,6 +28,7 @@ fun raise_exp(exp, base) {
 	ans = 1
 	while(exp > 0) {
 		ans = ans * base
+		exp = exp - 1
 	}
 
 	return ans

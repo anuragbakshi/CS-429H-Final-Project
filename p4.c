@@ -41,7 +41,7 @@ Formals *globalScope = NULL;
 Statement *defaultReturn = NULL;
 
 // true if the stack is aligned to 16 bytes
-bool stackAligned = false;
+// bool stackAligned = false;
 // used to generate unique labels
 int labelCounter = 0;
 
@@ -120,13 +120,13 @@ void genBlock(Statement *, Formals *);
 void genReturn(Statement *, Formals *);
 
 void genFun(Fun *function) {
-	// stack is misaligned at the beginning of a function
-	stackAligned = false;
+	// // stack is misaligned at the beginning of a function
+	// stackAligned = false;
 
 	// create the label and save the previous base pointer
 	printf("%s_fun:\n", function->name);
 	printf("	push %%rbp\n");
-	stackAligned = !stackAligned;
+	// stackAligned = !stackAligned;
 	// set the base pointer to after existing data
 	printf("	mov %%rsp, %%rbp\n");
 
@@ -138,82 +138,110 @@ void genFun(Fun *function) {
 }
 
 void genClosure(Closure *closure) {
-	// stack is misaligned at the beginning of a function
-	stackAligned = false;
+	// // stack is misaligned at the beginning of a function
+	// stackAligned = false;
 
-	// calls a fun or another closure
-	size_t funArgs = 0;
-
-	Fun *function = getFunByName(closure->funName);
-	if(function != NULL) {
-		funArgs = (function->formals != NULL) ? function->formals->n : 0;
-	} else {
-		Closure *other = getClosureByName(closure->funName);
-		funArgs = other->numArgs;
-	}
-
-	// create the label and save the previous base pointer
-	printf("%s_fun:\n", closure->name);
-	printf("	push %%rbp\n");
-	stackAligned = !stackAligned;
-	// set the base pointer to after existing data
-	printf("	mov %%rsp, %%rbp\n");
-
-	// calculate the alignment after pushing args
-	bool currentAligned = stackAligned ^ (closure->numArgs & 1);
-	// if(expression->callActuals != NULL) {
-	// 	currentAligned ^= LIST_LEN(expression->callActuals) & 1;
+	// // calls a fun or another closure
+	// size_t funArgs = 0;
+	//
+	// Fun *function = getFunByName(closure->funName);
+	// if(function != NULL) {
+	// 	funArgs = (function->formals != NULL) ? function->formals->n : 0;
+	// } else {
+	// 	Closure *other = getClosureByName(closure->funName);
+	// 	funArgs = other->numArgs;
 	// }
+	//
+	// // create the label and save the previous base pointer
+	// printf("%s_fun:\n", closure->name);
+	// printf("	push %%rbp\n");
+	// // stackAligned = !stackAligned;
+	// // set the base pointer to after existing data
+	// printf("	mov %%rsp, %%rbp\n");
+	//
+	// // calculate the alignment after pushing args
+	// // bool currentAligned = stackAligned ^ (closure->numArgs & 1);
+	// // if(expression->callActuals != NULL) {
+	// // 	currentAligned ^= LIST_LEN(expression->callActuals) & 1;
+	// // }
+	//
+	// // add padding if necessary
+	// // if(!currentAligned) {
+	// // 	printf("	sub $8, %%rsp\n");
+	// // }
+	//
+	// // push arguments onto stack
+	// // TODO: check for callee saved registers
+	// size_t argsSize = (funArgs - closure->numArgs) * 8;
+	//
+	// // allocate space for the args
+	// printf("	sub %lu, %%rsp\n", argsSize);
+	//
+	// // copy them using memcpy
+	// printf("	lea %lu(%%rsp), %%rdi\n", argsSize);
+	// printf("	lea %s_closure_data(%%rip), %%rsi\n", closure->name);
+	// printf("	mov %lu, %%rdx\n", argsSize);
+	//
+	// // // if the stack isn't aligned, push 8 bytes
+	// // if(!stackAligned) {
+	// // 	printf("	sub $8, %%rsp\n");
+	// // }
+	//
+	// // make the actual call to memcpy
+	// printf("	call %s\n", MEMCPY_NAME);
+	//
+	// // // if we had pushed to align, pop to restore the correct stack
+	// // if(!stackAligned) {
+	// // 	printf("	add $8, %%rsp\n");
+	// // }
+	//
+	// // call the function
+	// printf("	call %s_fun\n", closure->funName);
+	//
+	// // remove the padding if we added it
+	// // if(!currentAligned) {
+	// // 	printf("	add $8, %%rsp\n");
+	// // }
+	//
+	// // stackAligned = currentAligned;
+	//
+	// // // push return value onto stack
+	// // printf("	push %%rax\n");
+	// // stackAligned = !stackAligned;
+	//
+	// // // generate the body and add the default return statement
+	// // genStatement(function->body, function->formals);
+	// // genStatement(defaultReturn, function->formals);
+	//
+	// printf("	ret\n");
+	//
+	// printf("\n");
 
-	// add padding if necessary
-	if(!currentAligned) {
-		printf("	sub $8, %%rsp\n");
-	}
+	printf("%s_fun:\n", closure->name);
 
-	// push arguments onto stack
 	// TODO: check for callee saved registers
-	size_t argsSize = (funArgs - closure->numArgs) * 8;
+	size_t argsSize = closure->numArgs * 8;
 
-	// allocate space for the args
-	printf("	sub %lu, %%rsp\n", argsSize);
+	// pop the return address
+	printf("	pop %%rbx\n");
+
+	// allocate space for the arguments
+	printf("	sub $%lu, %%rsp\n", argsSize);
 
 	// copy them using memcpy
-	printf("	lea %lu(%%rsp), %%rdi\n", argsSize);
+	// printf("	lea %lu(%%rsp), %%rdi\n", argsSize);
+	printf("	mov %%rsp, %%rdi\n");
 	printf("	lea %s_closure_data(%%rip), %%rsi\n", closure->name);
-	printf("	mov %lu, %%rdx\n", argsSize);
-
-	// if the stack isn't aligned, push 8 bytes
-	if(!stackAligned) {
-		printf("	sub $8, %%rsp\n");
-	}
+	printf("	mov $%lu, %%rdx\n", argsSize);
 
 	// make the actual call to memcpy
 	printf("	call %s\n", MEMCPY_NAME);
 
-	// if we had pushed to align, pop to restore the correct stack
-	if(!stackAligned) {
-		printf("	add $8, %%rsp\n");
-	}
+	// put the return address back
+	printf("	push %%rbx\n");
 
-	// call the function
-	printf("	call %s_fun\n", closure->funName);
-
-	// remove the padding if we added it
-	if(!currentAligned) {
-		printf("	add $8, %%rsp\n");
-	}
-
-	stackAligned = currentAligned;
-
-	// // push return value onto stack
-	// printf("	push %%rax\n");
-	// stackAligned = !stackAligned;
-
-	// // generate the body and add the default return statement
-	// genStatement(function->body, function->formals);
-	// genStatement(defaultReturn, function->formals);
-
-	printf("	ret\n");
+	// jump to the function
+	printf("	jmp %s_fun\n", closure->funName);
 
 	printf("\n");
 }
@@ -273,13 +301,13 @@ void genLoadOperands() {
 /* push the result onto the stack */
 void genSaveResult() {
 	printf("	push %%rax\n");
-	stackAligned = !stackAligned;
+	// stackAligned = !stackAligned;
 }
 
 /* set the flags for a boolean value (0 = false, !0 = true) */
 void genEvalBoolean() {
 	printf("	pop %%rax\n");
-	stackAligned = !stackAligned;
+	// stackAligned = !stackAligned;
 
 	printf("	cmp $0, %%rax\n");
 }
@@ -298,13 +326,14 @@ void genExpression(Expression *expression, Formals *scope) {
 				printf("	push %s_var(%%rip)\n", globalVar->first);
 			}
 
-			stackAligned = !stackAligned;
+			// stackAligned = !stackAligned;
 		} break;
 
 		case eVAL: {
 			// push the immediate value onto the stack
-			printf("	push $%"PRIu64"\n", expression->val);
-			stackAligned = !stackAligned;
+			// printf("	push $%"PRIu64"\n", expression->val);
+			printf("	push $%llu\n", expression->val);
+			// stackAligned = !stackAligned;
 		} break;
 
 		case ePLUS: {
@@ -401,15 +430,15 @@ void genExpression(Expression *expression, Formals *scope) {
 
 		case eCALL: {
 			// calculate the alignment after pushing args
-			bool currentAligned = stackAligned;
-			if(expression->callActuals != NULL) {
-				currentAligned ^= LIST_LEN(expression->callActuals) & 1;
-			}
+			// bool currentAligned = stackAligned;
+			// if(expression->callActuals != NULL) {
+			// 	currentAligned ^= LIST_LEN(expression->callActuals) & 1;
+			// }
 
 			// add padding if necessary
-			if(!currentAligned) {
-				printf("	sub $8, %%rsp\n");
-			}
+			// if(!currentAligned) {
+			// 	printf("	sub $8, %%rsp\n");
+			// }
 
 			// push arguments onto stack
 			genActuals(expression->callActuals, scope);
@@ -418,15 +447,15 @@ void genExpression(Expression *expression, Formals *scope) {
 			printf("	call %s_fun\n", expression->callName);
 
 			// remove the padding if we added it
-			if(!currentAligned) {
-				printf("	add $8, %%rsp\n");
-			}
+			// if(!currentAligned) {
+			// 	printf("	add $8, %%rsp\n");
+			// }
 
-			stackAligned = currentAligned;
+			// stackAligned = currentAligned;
 
 			// push return value onto stack
 			printf("	push %%rax\n");
-			stackAligned = !stackAligned;
+			// stackAligned = !stackAligned;
 		} break;
 	}
 }
@@ -438,7 +467,7 @@ void genAssignment(Statement *statement, Formals *scope) {
 	// generate the RHS and load it into %rax
 	genExpression(statement->assignValue, scope);
 	printf("	pop %%rax\n");
-	stackAligned = !stackAligned;
+	// stackAligned = !stackAligned;
 
 	if(localVar != NULL) { // if there is a local var, set that
 		int offset = 16 + 8 * (scope->n - localVar->n);
@@ -456,20 +485,21 @@ void genPrint(Statement *statement, Formals *scope) {
 	// load the arguments for printf
 	printf("	lea printf_format(%%rip), %%rdi\n");
 	printf("	pop %%rsi\n");
-	stackAligned = !stackAligned;
+	// stackAligned = !stackAligned;
 
 	// if the stack isn't aligned, push 8 bytes
-	if(!stackAligned) {
-		printf("	sub $8, %%rsp\n");
-	}
+	// if(!stackAligned) {
+	// 	printf("	sub $8, %%rsp\n");
+	// }
 
 	// make the actual call to printf
+	printf("	mov $0, %%rax\n");
 	printf("	call %s\n", PRINTF_NAME);
 
 	// if we had pushed to align, pop to restore the correct stack
-	if(!stackAligned) {
-		printf("	add $8, %%rsp\n");
-	}
+	// if(!stackAligned) {
+	// 	printf("	add $8, %%rsp\n");
+	// }
 }
 
 void genScan(Statement *statement, Formals *scope) {
@@ -493,21 +523,22 @@ void genScan(Statement *statement, Formals *scope) {
 	}
 
 	// if the stack isn't aligned, push 8 bytes
-	if(!stackAligned) {
-		printf("	sub $8, %%rsp\n");
-	}
+	// if(!stackAligned) {
+	// 	printf("	sub $8, %%rsp\n");
+	// }
 
 	// make the actual call to scanf
+	printf("	mov $0, %%rax\n");
 	printf("	call %s\n", SCANF_NAME);
 
 	// if we had pushed to align, pop to restore the correct stack
-	if(!stackAligned) {
-		printf("	add $8, %%rsp\n");
-	}
+	// if(!stackAligned) {
+	// 	printf("	add $8, %%rsp\n");
+	// }
 }
 
 void genBind(Statement *statement, Formals *scope) {
-	bool argsAligned = stackAligned;
+	// bool argsAligned = stackAligned;
 
 	// push arguments onto stack
 	size_t numArgs = LIST_LEN(statement->closureActuals);
@@ -517,25 +548,26 @@ void genBind(Statement *statement, Formals *scope) {
 	// TODO: check for callee saved registers
 	// load the arguments for memcpy
 	printf("	lea %s_closure_data(%%rip), %%rdi\n", statement->closure->name);
-	printf("	lea %lu(%%rsp), %%rsi\n", argsSize);
-	printf("	mov %lu, %%rdx\n", argsSize);
+	// printf("	lea %lu(%%rsp), %%rsi\n", argsSize);
+	printf("	mov %%rsp, %%rsi\n");
+	printf("	mov $%lu, %%rdx\n", argsSize);
 
-	// if the stack isn't aligned, push 8 bytes
-	if(!stackAligned) {
-		printf("	sub $8, %%rsp\n");
-	}
+	// // if the stack isn't aligned, push 8 bytes
+	// if(!stackAligned) {
+	// 	printf("	sub $8, %%rsp\n");
+	// }
 
 	// make the actual call to memcpy
 	printf("	call %s\n", MEMCPY_NAME);
 
-	// if we had pushed to align, pop to restore the correct stack
-	if(!stackAligned) {
-		printf("	add $8, %%rsp\n");
-	}
+	// // if we had pushed to align, pop to restore the correct stack
+	// if(!stackAligned) {
+	// 	printf("	add $8, %%rsp\n");
+	// }
 
 	// remove the closure args from the stack
-	printf("	add %lu, %%rsp\n", argsSize);
-	stackAligned = argsAligned;
+	printf("	add $%lu, %%rsp\n", argsSize);
+	// stackAligned = argsAligned;
 
 	STACK_PUSH(&closures, statement->closure);
 }
@@ -547,7 +579,7 @@ void genIf(Statement *statement, Formals *scope) {
 	genExpression(statement->ifCondition, scope);
 	genEvalBoolean();
 
-	bool currentAligned = stackAligned;
+	// bool currentAligned = stackAligned;
 	// if false, go to the else part
 	printf("	je else_%d\n", labelNum);
 
@@ -556,7 +588,7 @@ void genIf(Statement *statement, Formals *scope) {
 	// after running the then part, skip the else
 	printf("	jmp after_%d\n", labelNum);
 
-	stackAligned = currentAligned;
+	// stackAligned = currentAligned;
 	// generate the else part, if there is one
 	printf("	else_%d:\n", labelNum);
 	if(statement->ifElse != NULL) {
@@ -564,7 +596,7 @@ void genIf(Statement *statement, Formals *scope) {
 	}
 
 	// put the after label after the whole construct
-	stackAligned = currentAligned;
+	// stackAligned = currentAligned;
 	printf("	after_%d:\n", labelNum);
 }
 
@@ -596,12 +628,12 @@ void genReturn(Statement *statement, Formals *scope) {
 	// generate the value being returned and put it into %rax
 	genExpression(statement->returnValue, scope);
 	printf("	pop %%rax\n");
-	stackAligned = !stackAligned;
+	// stackAligned = !stackAligned;
 
 	// reset the stack pointers
 	printf("	mov %%rbp, %%rsp\n");
 	printf("	pop %%rbp\n");
-	stackAligned = !stackAligned;
+	// stackAligned = !stackAligned;
 
 	printf("	ret\n");
 }
@@ -642,19 +674,19 @@ int main(int argc, char *argv[]) {
 	// begin the .data section (variables)
 	printf(".data\n");
 	// the format string to print variables on assignment
-	printf("	printf_format: .string \"%%d\\n\"\n");
-	printf("	scanf_format: .string \"%%d\"\n");
+	printf("printf_format: .string \"%%d\\n\"\n");
+	printf("scanf_format: .string \"%%d\"\n");
 
 	// generate allocations for all global vars and their names
 	FOREACH(globalScope) {
-		printf("	%s_var: .quad 0\n", __item->first);
+		printf("%s_var: .quad 0\n", __item->first);
 		// printf("	%1$s_name: .string \"%1$s\"\n", __item->first);
 	}
 
 	// generate allocations for all closure data
 	// FOREACH(closures) genClosureData(__item->first);
 	FOREACH(closures) {
-		printf("	%s_closure_data: .zero %lu\n", __item->first->name, __item->first->numArgs * 8);
+		printf("%s_closure_data: .zero %lu\n", __item->first->name, __item->first->numArgs * 8);
 	}
 
 	return 0;

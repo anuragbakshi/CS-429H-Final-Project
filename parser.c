@@ -444,26 +444,27 @@ static Expression *e1(void) {
 
 			e->callName = id;
 			e->callActuals = actuals();
+			LIST_REVERSE(&e->callActuals);
 
-			// ********
-			Actuals *node = e->callActuals;
-			Actuals *next = NULL;
-			Actuals *prev = NULL;
-
-			int n = 1;
-			while(node != NULL) {
-				// printf("%d\n", node->n);
-				next = node->rest;
-				node->rest = prev;
-				node->n = n;
-
-				prev = node;
-				node = next;
-				++n;
-			}
-
-			e->callActuals = prev;
-			// ********
+			// // ********
+			// Actuals *node = e->callActuals;
+			// Actuals *next = NULL;
+			// Actuals *prev = NULL;
+			//
+			// int n = 1;
+			// while(node != NULL) {
+			// 	// printf("%d\n", node->n);
+			// 	next = node->rest;
+			// 	node->rest = prev;
+			// 	node->n = n;
+			//
+			// 	prev = node;
+			// 	node = next;
+			// 	++n;
+			// }
+			//
+			// e->callActuals = prev;
+			// // ********
 
 			if (!isRight())
 				error();
@@ -668,6 +669,7 @@ static Statement *statement(void) {
 
 		p->closureActuals = actuals();
 		p->closure->numArgs = (p->closureActuals != NULL) ? p->closureActuals->n : 0;
+		LIST_REVERSE(&p->closureActuals);
 
 		if(!isRight())
 			error();
