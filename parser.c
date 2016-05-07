@@ -706,7 +706,6 @@ static Statement *statement(void) {
 
 		return p;
 	} else if (isAwait()) {
-		printf("await\n");
 		Statement *p = NEW(Statement);
 		p->kind = sAwait;
 
@@ -718,7 +717,6 @@ static Statement *statement(void) {
 
 		p->retVar = getId();
 		consume();
-		printf("retvar\n");
 
 		if(!isComma())
 			error();
@@ -726,17 +724,33 @@ static Statement *statement(void) {
 
 		// get async handle
 		p->awaitHandle = expression();
-		consume();
-		printf("handle\n");
-		printf("%d\n", p->awaitHandle->kind == eVAR);
 
 		if (isSemi()) {
 			consume();
 		}
 
-		printf("finished\n");
-
 		return p;
+		// Statement *p = NEW(Statement);
+		// p->kind = sAwait;
+		//
+		// consume();
+		//
+		// if(!isId())
+		// 	error();
+		//
+		// p->retVar = getId();
+		//
+		// if(!isComma())
+		// 	error();
+		// consume();
+		//
+		// p->awaitHandle = expression();
+		//
+		// if (isSemi()) {
+		// 	consume();
+		// }
+		//
+		// return p;
 	} else if (isIf()) {
 		Statement *p = NEW(Statement);
 		p->kind = sIf;

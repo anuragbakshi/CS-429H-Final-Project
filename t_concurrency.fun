@@ -17,11 +17,11 @@ fun main() {
 	await ans_c_100_51, handle_c_100_51
 	await ans_c_100_52, handle_c_100_52
 
-	print(ans_c_100_48)
-	print(ans_c_100_49)
-	print(ans_c_100_50)
-	print(ans_c_100_51)
-	print(ans_c_100_52)
+	print ans_c_100_48
+	print ans_c_100_49
+	print ans_c_100_50
+	print ans_c_100_51
+	print ans_c_100_52
 }
 
 fun factorial(n) {
