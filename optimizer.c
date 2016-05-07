@@ -176,7 +176,8 @@ void handle_statement(Statement *statement, Vars *legacy) {
 		} break;
 		case sReturn : {
 			handle_return(statement, legacy);
-		}
+		} break;
+		case sNull :
 	}
 }
 
@@ -205,44 +206,49 @@ void mark_needed(Vars *vars, Statements *statements) {
 }
 
 void remove_code_function(Fun *fun) {
-	Statements *previous;
-	Vars *varStack;
 
-	// FOREACH(fun->body->block) {
-	// 	if(__item->first->semantics->anchor) {
-	// 		Vars *deps = __item->first->semantics->depends;
-	//
-	// 		while(deps != NULL) {
-	// 			STACK_PUSH(&varStack, deps->first);
-	// 			deps = deps->rest;
-	// 		}
-	// 	}
+	switch(fun->body->kind) {
+		case 
+	}
+
+	// Statements *previous;
+	// Vars *varStack;
+
+	// // FOREACH(fun->body->block) {
+	// // 	if(__item->first->semantics->anchor) {
+	// // 		Vars *deps = __item->first->semantics->depends;
+	// //
+	// // 		while(deps != NULL) {
+	// // 			STACK_PUSH(&varStack, deps->first);
+	// // 			deps = deps->rest;
+	// // 		}
+	// // 	}
+	// // }
+
+	// if(fun->body->kind != sBlock) {
+	// 	fun->body->needed = fun->body->semantics->anchor;
+	// 	return;
 	// }
 
-	if(fun->body->kind != sBlock) {
-		fun->body->needed = fun->body->semantics->anchor;
-		return;
-	}
+	// FOREACH(fun->body->block) {
+	// 	// anchor
+	// 	if(__item->first->semantics->anchor) {
+	// 		__item->first->needed = true;
 
-	FOREACH(fun->body->block) {
-		// anchor
-		if(__item->first->semantics->anchor) {
-			__item->first->needed = true;
+	// 		// Vars *deps = __item->first->semantics->depends;
 
-			// Vars *deps = __item->first->semantics->depends;
+	// 		// add all deps
+	// 		// while(deps != NULL) {
+	// 		// 	STACK_PUSH(&varStack, deps->first);
+	// 		// 	deps = deps->rest;
+	// 		// }
 
-			// add all deps
-			// while(deps != NULL) {
-			// 	STACK_PUSH(&varStack, deps->first);
-			// 	deps = deps->rest;
-			// }
+	// 		mark_needed(__item->first->semantics->depends, previous);
+	// 	}
 
-			mark_needed(__item->first->semantics->depends, previous);
-		}
-
-		// add the current statement to the list of previous statements
-		STACK_PUSH(&previous, __item->first);
-	}
+	// 	// add the current statement to the list of previous statements
+	// 	STACK_PUSH(&previous, __item->first);
+	// }
 }
 
 void remove_code(Funs *funs) {
@@ -290,6 +296,7 @@ void print_statement_semantics(Statement *s) {
 				printf("ENTERING WHILE\n");
 				print_statement_semantics(s->whileBody);
 			} break;
+			case sNull : break;
 			default : {
 			printf("printing mods\n");
 			print_vars(s->semantics->modifies);
