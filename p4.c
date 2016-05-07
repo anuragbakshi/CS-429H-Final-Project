@@ -116,6 +116,8 @@ void genAssignment(Statement *, Formals *);
 void genPrint(Statement *, Formals *);
 void genScan(Statement *, Formals *);
 void genBind(Statement *, Formals *);
+void genAsync(Statement *, Formals *);
+void genAwait(Statement *, Formals *);
 void genIf(Statement *, Formals *);
 void genWhile(Statement *, Formals *);
 void genBlock(Statement *, Formals *);
@@ -140,85 +142,6 @@ void genFun(Fun *function) {
 }
 
 void genClosure(Closure *closure) {
-	// // stack is misaligned at the beginning of a function
-	// stackAligned = false;
-
-	// // calls a fun or another closure
-	// size_t funArgs = 0;
-	//
-	// Fun *function = getFunByName(closure->funName);
-	// if(function != NULL) {
-	// 	funArgs = (function->formals != NULL) ? function->formals->n : 0;
-	// } else {
-	// 	Closure *other = getClosureByName(closure->funName);
-	// 	funArgs = other->numArgs;
-	// }
-	//
-	// // create the label and save the previous base pointer
-	// printf("%s_fun:\n", closure->name);
-	// printf("	push %%rbp\n");
-	// // stackAligned = !stackAligned;
-	// // set the base pointer to after existing data
-	// printf("	mov %%rsp, %%rbp\n");
-	//
-	// // calculate the alignment after pushing args
-	// // bool currentAligned = stackAligned ^ (closure->numArgs & 1);
-	// // if(expression->callActuals != NULL) {
-	// // 	currentAligned ^= LIST_LEN(expression->callActuals) & 1;
-	// // }
-	//
-	// // add padding if necessary
-	// // if(!currentAligned) {
-	// // 	printf("	sub $8, %%rsp\n");
-	// // }
-	//
-	// // push arguments onto stack
-	// // TODO: check for callee saved registers
-	// size_t argsSize = (funArgs - closure->numArgs) * 8;
-	//
-	// // allocate space for the args
-	// printf("	sub %lu, %%rsp\n", argsSize);
-	//
-	// // copy them using memcpy
-	// printf("	lea %lu(%%rsp), %%rdi\n", argsSize);
-	// printf("	lea %s_closure_data(%%rip), %%rsi\n", closure->name);
-	// printf("	mov %lu, %%rdx\n", argsSize);
-	//
-	// // // if the stack isn't aligned, push 8 bytes
-	// // if(!stackAligned) {
-	// // 	printf("	sub $8, %%rsp\n");
-	// // }
-	//
-	// // make the actual call to memcpy
-	// printf("	call %s\n", MEMCPY_NAME);
-	//
-	// // // if we had pushed to align, pop to restore the correct stack
-	// // if(!stackAligned) {
-	// // 	printf("	add $8, %%rsp\n");
-	// // }
-	//
-	// // call the function
-	// printf("	call %s_fun\n", closure->funName);
-	//
-	// // remove the padding if we added it
-	// // if(!currentAligned) {
-	// // 	printf("	add $8, %%rsp\n");
-	// // }
-	//
-	// // stackAligned = currentAligned;
-	//
-	// // // push return value onto stack
-	// // printf("	push %%rax\n");
-	// // stackAligned = !stackAligned;
-	//
-	// // // generate the body and add the default return statement
-	// // genStatement(function->body, function->formals);
-	// // genStatement(defaultReturn, function->formals);
-	//
-	// printf("	ret\n");
-	//
-	// printf("\n");
-
 	printf("%s_fun:\n", closure->name);
 
 	// TODO: check for callee saved registers
@@ -268,6 +191,14 @@ void genStatement(Statement *statement, Formals *scope) {
 
 		case sBind: {
 			genBind(statement, scope);
+		} break;
+
+		case sAsync: {
+			genAsync(statement, scope);
+		} break;
+
+		case sAwait: {
+			genAwait(statement, scope);
 		} break;
 
 		case sIf: {
@@ -572,6 +503,54 @@ void genBind(Statement *statement, Formals *scope) {
 	// stackAligned = argsAligned;
 
 	STACK_PUSH(&closures, statement->closure);
+}
+
+void genAsync(Statement *statement, Formals *scope) {
+	// load the arguments for pthread_create
+	// see if a local var with that name exists
+	Formals *localVar = findNode(scope, statement->handleVar);
+
+	// pthread_t *thread
+	if(localVar != NULL) { // if there is a local var, get its address
+		int offset = 16 + 8 * (scope->n - localVar->n);
+		printf("	lea %d(%%rbp), %%rdi\n", offset);
+	} else { // otherwise, use the global one's address
+		Formals *globalVar = addGlobalVar(statement->handleVar);
+		printf("	lea %s_var(%%rip), %%rdi\n", globalVar->first);
+	}
+
+	// const pthread_attr_t *attr
+	printf("	mov $0, %%rsi\n");
+	// void *(*start_routine)(void *)
+	// TODO: doesn't work, will start writing (struct pthread_t) there
+	printf("	lea %s_fun(%%rip), %%rdx\n", statement->asyncFunName);
+	// void *arg
+	printf("	mov $0, %%rcx\n");
+
+	// make the actual call to pthread_create
+	printf("	mov $0, %%rax\n");
+	printf("	call %s\n", PCREATE_NAME);
+}
+
+void genAwait(Statement *statement, Formals *scope) {
+	// load the arguments for pthread_join
+	genExpression(statement->awaitHandle, scope);
+	printf("	pop %%rdi\n");
+
+	// see if a local var with that name exists
+	Formals *localVar = findNode(scope, statement->retVar);
+
+	if(localVar != NULL) { // if there is a local var, get its address
+		int offset = 16 + 8 * (scope->n - localVar->n);
+		printf("	lea %d(%%rbp), %%rsi\n", offset);
+	} else { // otherwise, use the global one's address
+		Formals *globalVar = addGlobalVar(statement->retVar);
+		printf("	lea %s_var(%%rip), %%rsi\n", globalVar->first);
+	}
+
+	// make the actual call to pthread_join
+	printf("	mov $0, %%rax\n");
+	printf("	call %s\n", PJOIN_NAME);
 }
 
 void genIf(Statement *statement, Formals *scope) {

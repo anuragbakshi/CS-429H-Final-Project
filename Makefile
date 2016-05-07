@@ -29,7 +29,7 @@ p4 : p4.o parser.o Makefile
 progs : $(PROGS)
 
 $(PROGS) : % : %.o
-	gcc -o $@ $*.o
+	gcc -o $@ $*.o -pthread
 
 outs : $(OUTS)
 
