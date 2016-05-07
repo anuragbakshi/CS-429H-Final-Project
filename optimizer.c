@@ -204,45 +204,90 @@ void mark_needed(Vars *vars, Statements *statements) {
 	}
 }
 
+
+
+void set_add(Expression *expression, Vars *vars_used) {
+	Vars *list_of_vars = get_vars(expression); //todo
+	while(list_of_vars != NULL) {
+		remove_one_var(list_of_vars->first, vars_used); //todo
+	}
+	if(list_of_vars != NULL) free(list_of_vars);
+}
+
+void remove_return(Statement *statement, Vars *vars_used) {
+	set_add(statement->returnValue, vars_used); //todo
+}
+
+void remove_while(Statement *statement, Vars *vars_used) {
+	set_add(statement->whileCondition, Vars *vars_used);
+	if(statement->whileBody != NULL) only_add_bodyvars(statement->whileBody, Vars *vars_used);
+}
+
+void remove_if(Statement *statement, Vars *vars_nee) {
+	set_add(statement->ifCondition, Vars *vars_used);
+	if(statement->ifThen != NULL) only_add_bodyvars(statement->ifThen, Vars *vars_used); //todo
+	if(statement->ifElse != NULL) only_add_bodyvars(statement->ifElse, Vars *vars_used);
+}
+
+
+
+void remove_block(Block *block, Vars *vars_used) {
+	if(block == NULL) return;
+	remove_block(block->next, vars_used);
+	remove_code_statement(block->first, vars_used);
+}
+
+void remove_scan(Statement *statement, Vars *vars_used) {
+	if(in_set(statement->scanVar, vars_used)) remove_from_set(statement->scanVar, vars_used); //todo todo
+	else statement->kind = sNull; 
+}
+
+void remove_assignment(Statement *statement, Vars *vars_used) {
+	if(in_set(statement->assignName, vars_used)) {
+		remove_from_set(statement->assignName, vars_used);
+		set_add(statement->assignValue, vars_used);
+	}
+	else statement->kind = sNull;
+}
+
+void remove_print(Statement *statement, Vars *vars_used) {
+	set_add(statement->printValue, vars_used);
+}
+
+void remove_code_statement(Statement *statement, Vars *vars_used) {
+	switch(body->kind) {
+		case : sAssignment {
+			remove_assignment(statement, vars_used);
+		} break;
+    	case : sPrint {
+    		remove_print(statement, vars_used);
+    	} break;
+    	case : sScan {
+    		remove_scan(statement, vars_used);
+    	} break;
+    	case : sIf {
+    		remove_if(statement, vars_used);
+
+    	} break;
+    	case : sWhile {
+    		remove_while(statement, vars_used);
+
+    	} break;
+    	case : sBlock {
+    		remove_block(statement->block, vars_used);
+
+    	} break;
+    	case : sReturn {
+    		remove_return(statement, vars_used);
+    	} break;
+    	default : break;
+
+	}
+}
+
 void remove_code_function(Fun *fun) {
-	Statements *previous;
-	Vars *varStack;
-
-	// FOREACH(fun->body->block) {
-	// 	if(__item->first->semantics->anchor) {
-	// 		Vars *deps = __item->first->semantics->depends;
-	//
-	// 		while(deps != NULL) {
-	// 			STACK_PUSH(&varStack, deps->first);
-	// 			deps = deps->rest;
-	// 		}
-	// 	}
-	// }
-
-	if(fun->body->kind != sBlock) {
-		fun->body->needed = fun->body->semantics->anchor;
-		return;
-	}
-
-	FOREACH(fun->body->block) {
-		// anchor
-		if(__item->first->semantics->anchor) {
-			__item->first->needed = true;
-
-			// Vars *deps = __item->first->semantics->depends;
-
-			// add all deps
-			// while(deps != NULL) {
-			// 	STACK_PUSH(&varStack, deps->first);
-			// 	deps = deps->rest;
-			// }
-
-			mark_needed(__item->first->semantics->depends, previous);
-		}
-
-		// add the current statement to the list of previous statements
-		STACK_PUSH(&previous, __item->first);
-	}
+	Vars *vars_used = NEW(Vars);
+	remove_code_statement(fun->body, vars_used);
 }
 
 void remove_code(Funs *funs) {
