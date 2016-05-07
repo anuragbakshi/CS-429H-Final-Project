@@ -205,50 +205,56 @@ void mark_needed(Vars *vars, Statements *statements) {
 	}
 }
 
-void remove_code_function(Fun *fun) {
+void remove_assignment(Statements *statement, Vars *var_used, Vars *var_legacy) {
+	
+}
 
-	switch(fun->body->kind) {
-		case 
+void remove_code_statement(Statement statement, Vars *var_used, Vars *var_legacy) {
+	switch(body->kind) {
+		case : sAssignment {
+			remove_assignment(statement, var_used, var_legacy);
+		} break;
+    	case : sPrint {
+    		remove_print(statement, var_used, var_legacy);
+    	} break;
+    	case : sScan {
+    		remove_scan(statement, var_used, var_legacy);
+
+    	} break;
+    	case : sBind {
+    		remove_bind(statement, var_used, var_legacy);
+
+    	} break;
+    	case : sIf {
+    		remove_if(statement, var_used, var_legacy);
+
+    	} break;
+    	case : sWhile {
+    		remove_while(statement, var_used, var_legacy);
+
+    	} break;
+    	case : sBlock {
+    		remove_block(statement, var_used, var_legacy);
+
+    	} break;
+    	case : sReturn {
+    		remove_return(statement, var_used, var_legacy);
+
+    	} break;
+    	case : sNull {
+
+    	}
+
 	}
+}
 
-	// Statements *previous;
-	// Vars *varStack;
-
-	// // FOREACH(fun->body->block) {
-	// // 	if(__item->first->semantics->anchor) {
-	// // 		Vars *deps = __item->first->semantics->depends;
-	// //
-	// // 		while(deps != NULL) {
-	// // 			STACK_PUSH(&varStack, deps->first);
-	// // 			deps = deps->rest;
-	// // 		}
-	// // 	}
-	// // }
-
-	// if(fun->body->kind != sBlock) {
-	// 	fun->body->needed = fun->body->semantics->anchor;
-	// 	return;
-	// }
-
-	// FOREACH(fun->body->block) {
-	// 	// anchor
-	// 	if(__item->first->semantics->anchor) {
-	// 		__item->first->needed = true;
-
-	// 		// Vars *deps = __item->first->semantics->depends;
-
-	// 		// add all deps
-	// 		// while(deps != NULL) {
-	// 		// 	STACK_PUSH(&varStack, deps->first);
-	// 		// 	deps = deps->rest;
-	// 		// }
-
-	// 		mark_needed(__item->first->semantics->depends, previous);
-	// 	}
-
-	// 	// add the current statement to the list of previous statements
-	// 	STACK_PUSH(&previous, __item->first);
-	// }
+void remove_code_function(Fun *fun) {
+	Vars *var_used = NEW(Vars);
+	Vars *var_legacy = NEW(Vars);
+	Statement body = fun->body;
+	remove_code_statement(fun->body, var_set, var_legacy);
+	free(var_used);
+	free(var_legacy)
 }
 
 void remove_code(Funs *funs) {

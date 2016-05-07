@@ -154,6 +154,7 @@ enum SKind {
 	sWhile,
 	sBlock,
 	sReturn,
+    sNull,
 };
 
 struct Statement {
