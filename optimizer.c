@@ -176,7 +176,7 @@ void handle_statement(Statement *statement, Vars *legacy) {
 		} break;
 		case sReturn : {
 			handle_return(statement, legacy);
-		}
+		} default : break;
 	}
 }
 
@@ -206,45 +206,149 @@ void mark_needed(Vars *vars, Statements *statements) {
 
 
 
+void set_add_one_var(Var *v, Vars *vars) {
+	if(vars->first == NULL) {
+		vars->first = v;
+		return;
+	}
+	while(vars != NULL) {
+		if(strcmp(vars->first->name, v->name) == 0) return;
+		if(vars->rest == NULL) {
+			Vars *newVars = NEW(Vars);
+			newVars->first = v;
+			vars->rest = newVars;
+			return;
+		}
+		vars = vars->rest;
+	}
+}
+
+void get_vars(Expression *expression, Vars *vars) {
+	Vars *temp;
+	switch(expression->kind) {
+		case eVAR : {
+			Var *v = NEW(Var);
+			v->name = expression->varName;
+			set_add_one_var(v, vars);
+		}
+		case ePLUS:
+		case eMINUS:
+		case eMUL:
+		case eDIV:
+		case eEQ:
+		case eNE:
+		case eLT:
+		case eGT: {
+			get_vars(expression->left, vars);
+			get_vars(expression->right, vars);
+		}
+		default : break;
+	}
+}
+
+void only_add_bodyvars(Statement *statement, Vars *vars_used) {
+	switch(statement->kind) {
+
+		case sAssignment : {
+			set_add(statement->assignValue, vars_used);
+		} break;
+		case sPrint : {
+			set_add(statement->printValue, vars_used);
+		} break;
+		case sIf : {
+			set_add(statement->ifCondition, vars_used);
+			if(statement->ifThen != NULL) only_add_bodyvars(statement->ifThen, vars_used);
+			if(statement->ifElse != NULL) only_add_bodyvars(statement->ifElse, vars_used);
+		} break;
+		case sWhile : {
+			set_add(statement->whileCondition, vars_used);
+			if(statement->whileBody != NULL) only_add_bodyvars(statement->whileBody, vars_used);
+		} break;
+
+		case sBlock : {
+			Block *block = statement->block;
+			while(block != NULL) {
+				only_add_bodyvars(block->first);
+				block = block->rest;
+			}
+		} break;
+		case sReturn : {
+			set_add(statement->returnValue);
+		} break;
+		default : break;
+	}
+} //todo
+
+void remove_from_set(char *varName, Vars **var_set) {
+	if((*var_set)->first == NULL) return;
+	if(strcmp((*var_set)->first->name, varName) == 0) {
+		if((*var_set)->rest == NULL) *var_set = NEW(Vars);
+		else *var_set = (*var_set)->rest;
+		return;
+	}
+	Vars *temp = *var_set;
+	Vars *temp2 = (*var_set)->rest;
+	while(temp2 != NULL) {
+		if(strcmp(temp2->first->name, varName) == 0) {
+			temp->rest = temp2->rest;
+			free(temp2);
+			return;
+		}
+		temp = temp2;
+		temp2 = temp2->rest;
+	}
+}
+
+int in_set(char *varName, Vars *var_set) {
+	if(var_set->first == NULL) return 0;
+	while(var_set != NULL) {
+		if(strcmp(var_set->first->name, varName) == 0) return 1;
+		var_set = var_set->rest;
+	}
+	return 0;
+}
+
 void set_add(Expression *expression, Vars *vars_used) {
-	Vars *list_of_vars = get_vars(expression); //todo
-	while(list_of_vars != NULL) {
-		remove_one_var(list_of_vars->first, vars_used); //todo
+	Vars *list_of_vars = NEW(Vars);
+	get_vars(expression, list_of_vars);
+	while(list_of_vars != NULL && list_of_vars->first != NULL) {
+		set_add_one_var(list_of_vars->first, vars_used);
+		list_of_vars = list_of_vars->rest;
 	}
 	if(list_of_vars != NULL) free(list_of_vars);
 }
 
 void remove_return(Statement *statement, Vars *vars_used) {
-	set_add(statement->returnValue, vars_used); //todo
+	set_add(statement->returnValue, vars_used);
 }
 
 void remove_while(Statement *statement, Vars *vars_used) {
-	set_add(statement->whileCondition, Vars *vars_used);
-	if(statement->whileBody != NULL) only_add_bodyvars(statement->whileBody, Vars *vars_used);
+	set_add(statement->whileCondition, vars_used);
+	if(statement->whileBody != NULL) only_add_bodyvars(statement->whileBody, vars_used);
 }
 
-void remove_if(Statement *statement, Vars *vars_nee) {
-	set_add(statement->ifCondition, Vars *vars_used);
-	if(statement->ifThen != NULL) only_add_bodyvars(statement->ifThen, Vars *vars_used); //todo
-	if(statement->ifElse != NULL) only_add_bodyvars(statement->ifElse, Vars *vars_used);
+void remove_if(Statement *statement, Vars *vars_used) {
+	set_add(statement->ifCondition, vars_used);
+	if(statement->ifThen != NULL) only_add_bodyvars(statement->ifThen, vars_used); //todo
+	if(statement->ifElse != NULL) only_add_bodyvars(statement->ifElse, vars_used);
 }
 
-
+void remove_code_statement(Statement *statement, Vars *vars_used);
 
 void remove_block(Block *block, Vars *vars_used) {
 	if(block == NULL) return;
-	remove_block(block->next, vars_used);
+	remove_block(block->rest, vars_used);
 	remove_code_statement(block->first, vars_used);
 }
 
 void remove_scan(Statement *statement, Vars *vars_used) {
-	if(in_set(statement->scanVar, vars_used)) remove_from_set(statement->scanVar, vars_used); //todo todo
+	if(in_set(statement->scanVar, vars_used)) remove_from_set(statement->scanVar, &vars_used); 
 	else statement->kind = sNull; 
 }
 
 void remove_assignment(Statement *statement, Vars *vars_used) {
 	if(in_set(statement->assignName, vars_used)) {
-		remove_from_set(statement->assignName, vars_used);
+		remove_from_set(statement->assignName, &vars_used);
 		set_add(statement->assignValue, vars_used);
 	}
 	else statement->kind = sNull;
@@ -255,29 +359,29 @@ void remove_print(Statement *statement, Vars *vars_used) {
 }
 
 void remove_code_statement(Statement *statement, Vars *vars_used) {
-	switch(body->kind) {
-		case : sAssignment {
+	switch(statement->kind) {
+		case sAssignment : {
 			remove_assignment(statement, vars_used);
 		} break;
-    	case : sPrint {
+    	case sPrint : {
     		remove_print(statement, vars_used);
     	} break;
-    	case : sScan {
+    	case  sScan : {
     		remove_scan(statement, vars_used);
     	} break;
-    	case : sIf {
+    	case  sIf : {
     		remove_if(statement, vars_used);
 
     	} break;
-    	case : sWhile {
+    	case  sWhile : {
     		remove_while(statement, vars_used);
 
     	} break;
-    	case : sBlock {
+    	case  sBlock : {
     		remove_block(statement->block, vars_used);
 
     	} break;
-    	case : sReturn {
+    	case  sReturn : {
     		remove_return(statement, vars_used);
     	} break;
     	default : break;
