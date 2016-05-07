@@ -8,6 +8,7 @@
 #include <string.h>
 #include <inttypes.h>
 
+void set_add(Expression *expression, Vars *vars_used);
 
 void assign_expression(Vars *depends, Expression *expression);
 void handle_statement(Statement *statement, Vars *legacy);
@@ -268,12 +269,12 @@ void only_add_bodyvars(Statement *statement, Vars *vars_used) {
 		case sBlock : {
 			Block *block = statement->block;
 			while(block != NULL) {
-				only_add_bodyvars(block->first);
+				only_add_bodyvars(block->first, vars_used);
 				block = block->rest;
 			}
 		} break;
 		case sReturn : {
-			set_add(statement->returnValue);
+			set_add(statement->returnValue, vars_used);
 		} break;
 		default : break;
 	}
