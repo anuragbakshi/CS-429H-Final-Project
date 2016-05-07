@@ -150,6 +150,8 @@ enum SKind {
 	sPrint,
 	sScan,
 	sBind,
+	sAsync,
+	sAwait,
 	sIf,
 	sWhile,
 	sBlock,
@@ -174,6 +176,16 @@ struct Statement {
 		struct {
 			Closure *closure;
 			Actuals *closureActuals;
+		};
+
+		struct {
+			char *handleVar;
+			char *asyncFunName;
+		};
+
+		struct {
+			char *retVar;
+			Expression *awaitHandle;
 		};
 
 		struct {

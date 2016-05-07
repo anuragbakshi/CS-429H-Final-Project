@@ -39,6 +39,8 @@ enum TKind {
 	tPRINT,
 	tSCAN,
 	tBIND,
+	tASYNC,
+	tAWAIT,
 	tFUN,
 	tCOMMA,
 	tRETURN
@@ -133,6 +135,10 @@ static void peekId(void) {
 				current.kind = tSCAN;
 			} else if (strcmp(current.ptr, "bind") == 0) {
 				current.kind = tBIND;
+			} else if (strcmp(current.ptr, "async") == 0) {
+				current.kind = tASYNC;
+			} else if (strcmp(current.ptr, "await") == 0) {
+				current.kind = tAWAIT;
 			} else if (strcmp(current.ptr, "fun") == 0) {
 				current.kind = tFUN;
 			} else if (strcmp(current.ptr, "return") == 0) {
@@ -285,6 +291,16 @@ static int isScan() {
 static int isBind() {
 	peek();
 	return current.kind == tBIND;
+}
+
+static int isAsync() {
+	peek();
+	return current.kind == tASYNC;
+}
+
+static int isAwait() {
+	peek();
+	return current.kind == tAWAIT;
 }
 
 static int isIf() {
@@ -445,26 +461,6 @@ static Expression *e1(void) {
 			e->callName = id;
 			e->callActuals = actuals();
 			LIST_REVERSE(&e->callActuals);
-
-			// // ********
-			// Actuals *node = e->callActuals;
-			// Actuals *next = NULL;
-			// Actuals *prev = NULL;
-			//
-			// int n = 1;
-			// while(node != NULL) {
-			// 	// printf("%d\n", node->n);
-			// 	next = node->rest;
-			// 	node->rest = prev;
-			// 	node->n = n;
-			//
-			// 	prev = node;
-			// 	node = next;
-			// 	++n;
-			// }
-			//
-			// e->callActuals = prev;
-			// // ********
 
 			if (!isRight())
 				error();
@@ -678,6 +674,67 @@ static Statement *statement(void) {
 		if (isSemi()) {
 			consume();
 		}
+
+		return p;
+	} else if (isAsync()) {
+		Statement *p = NEW(Statement);
+		p->kind = sAsync;
+
+		consume();
+
+		// get handle var name
+		if(!isId())
+			error();
+
+		p->handleVar = getId();
+		consume();
+
+		if(!isComma())
+			error();
+		consume();
+
+		// get fun name
+		if(!isId())
+			error();
+
+		p->asyncFunName = getId();
+		consume();
+
+		if (isSemi()) {
+			consume();
+		}
+
+		return p;
+	} else if (isAwait()) {
+		printf("await\n");
+		Statement *p = NEW(Statement);
+		p->kind = sAwait;
+
+		consume();
+
+		// get return var name
+		if(!isId())
+			error();
+
+		p->retVar = getId();
+		consume();
+		printf("retvar\n");
+
+		if(!isComma())
+			error();
+		consume();
+
+		// get async handle
+		p->awaitHandle = expression();
+		consume();
+		printf("handle\n");
+		printf("%d\n", p->awaitHandle->kind == eVAR);
+
+		if (isSemi()) {
+			consume();
+		}
+
+		printf("finished\n");
 
 		return p;
 	} else if (isIf()) {
