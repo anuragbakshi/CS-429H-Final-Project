@@ -21,19 +21,21 @@ https://sourceware.org/gdb/onlinedocs/gdb/TUI-Commands.html
 */
 
 // because macs are special...
-#ifdef __APPLE__
-#define PRINTF_NAME "_printf"
-#define SCANF_NAME "_scanf"
-#define CALLOC_NAME "_calloc"
-#define MEMCPY_NAME "_memcpy"
-#define MAIN_NAME "_main"
-#else
+// #ifdef __APPLE__
+// #define PRINTF_NAME "_printf"
+// #define SCANF_NAME "_scanf"
+// #define CALLOC_NAME "_calloc"
+// #define MEMCPY_NAME "_memcpy"
+// #define MAIN_NAME "_main"
+// #else
 #define PRINTF_NAME "printf"
 #define SCANF_NAME "scanf"
-#define CALLOC_NAME "calloc"
+// #define CALLOC_NAME "calloc"
 #define MEMCPY_NAME "memcpy"
+#define PCREATE_NAME "pthread_create"
+#define PJOIN_NAME "pthread_join"
 #define MAIN_NAME "main"
-#endif
+// #endif
 
 // a list of all the global vars
 Formals *globalScope = NULL;
@@ -660,6 +662,8 @@ int main(int argc, char *argv[]) {
 	printf("	.extern %s\n", PRINTF_NAME);
 	printf("	.extern %s\n", SCANF_NAME);
 	printf("	.extern %s\n", MEMCPY_NAME);
+	printf("	.extern %s\n", PCREATE_NAME);
+	printf("	.extern %s\n", PJOIN_NAME);
 	printf("\n");
 
 	// generate the program entry point
