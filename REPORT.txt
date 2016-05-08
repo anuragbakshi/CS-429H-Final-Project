@@ -15,13 +15,17 @@ what did you actually do?
     We succeeded in adding I/O and arithmetic operators to fun. We also added
     optimization to the compiler. However, we only consider the case when
     we have a single main function for optimizations- function calling is
-    not supported. To make up for this fact, we added threads and closures
-    to fun.
+    not supported. To make up for this fact, we added asynchronous tasks and
+	closures to fun.
+
+	Closures can take any number of arguments and are applied to the function starting at the first argument. This means closures can give any number of arguments up to the number required and can also create closures out of other closures. They can also be creating in loops, functions, etc., since they are generated at runtime. They are created using the "bind" keyword using an existing function and a list of arguments to bind to that function.
+
+	Asynchronous tasks can also be created in any context, just like closures. Tasks are created using the "async" keyword and are uniquely identified by a handle, which is stored in any variable. Return values can be collected using the "await" keyword which waits for the task to finish and places the return value into a variable. Task much be created with zero-argument functions, which can be constructed using closures.
 
 Contribution of each team member:
 
     Anurag:
-    Added I/O, arithmetic operators, threads and closures.
+    Added I/O, arithmetic operators, async tasks, and closures.
 
     Harsh:
     Added dependency analysis and compiler optimizations.
@@ -37,13 +41,20 @@ What was difficult?
 
     2. Recursion (especially in cases when two functions are calling each
        other) make dependency analysis much harder.
-    
+
     3. There is little concept of sequential code in while loops which again
        makes dependency analysis hard.
 
     Therefore, we consider only the cases when there is a single main function.
     In case there are while loops, we consider add all r-variables within the
     the body to are dependency list.
+
+	Anurag:
+	Adding I/O and arithmetic was quite straightforward and didn't take much time.
+
+	Initially, adding closures seemed simple as well since we had already implemented thunks in p7. For this project however, since we must produce assembly code that has the intended effect of the program. This involved lots of stack manipulation to place arguments in the correct locations for implementing closures to make them to work for all use cases (partial evaluation, any number of arguments, nested closures, dynamic creation in loops and such).
+
+	Implementing asynchronous tasks was also interesting since I got to work with the pthread library, which I had never used before. Since I wanted these new features of fun to be usable in any scope, it required much more planning than expected.
 
 What did you learn?
 
@@ -54,5 +65,3 @@ What did you learn?
     relatively simplistic, they manage to remove a significant amount of
     redundant code, as can be seen by comparing the assembly output from
     rremove_test_1a, remove_test_1b and remove_test_1c.
-
-
