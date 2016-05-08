@@ -1,6 +1,1 @@
-===> t_optimize_1c ... fail
------ expected ------
------ found -----
-25
-19
-29
+===> t_optimize_1c ... pass

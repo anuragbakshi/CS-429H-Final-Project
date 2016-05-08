@@ -1,4 +1,1 @@
-===> t_optimize_1b ... fail
------ expected ------
------ found -----
-29
+===> t_optimize_1b ... pass

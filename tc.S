@@ -9,25 +9,31 @@
 main:
 	jmp main_fun
 
-main_fun:
+printf_fun:
 	push %rbp
 	mov %rsp, %rbp
-	push x_var(%rip)
+	push 16(%rbp)
 	lea printf_format(%rip), %rdi
 	pop %rsi
 	mov $0, %rax
 	call printf
-	push x_var(%rip)
-	push $10
-	pop %rcx
+	push $0
 	pop %rax
-	cmp %rax, %rcx
-	mov $0, %rax
-	sete %al
+	mov %rbp, %rsp
+	pop %rbp
+	pop %rcx
+	add $8, %rsp
+	push %rcx
+	ret
+
+main_fun:
+	push %rbp
+	mov %rsp, %rbp
+	push $100
+	call printf_fun
 	push %rax
 	pop %rax
-	cmp $0, %rax
-	je else_0
+	mov %rax, v_var(%rip)
 	push $0
 	pop %rax
 	mov %rbp, %rsp
@@ -36,21 +42,6 @@ main_fun:
 	add $0, %rsp
 	push %rcx
 	ret
-	jmp after_0
-	else_0:
-	after_0:
-	push x_var(%rip)
-	push $1
-	pop %rcx
-	pop %rax
-	add %rcx, %rax
-	push %rax
-	pop %rax
-	mov %rax, x_var(%rip)
-	call main_fun
-	push %rax
-	pop %rax
-	mov %rax, z_var(%rip)
 	push $0
 	pop %rax
 	mov %rbp, %rsp
@@ -63,5 +54,4 @@ main_fun:
 .data
 printf_format: .string "%d\n"
 scanf_format: .string "%d"
-z_var: .quad 0
-x_var: .quad 0
+v_var: .quad 0
