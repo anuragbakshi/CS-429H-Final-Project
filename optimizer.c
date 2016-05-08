@@ -68,7 +68,9 @@ void add_expression(Vars **depends, Expression *assignValue) {
 		case eVAL : {
 			return;
 		} break;
+		case eCALL : {
 
+		} break;
 		default : {
 			printf("not implemented something in add_expression\n");
 			exit(1);
@@ -102,7 +104,7 @@ void remove_expression(Vars **legacy, Expression *expression) {
         } break;
 
         default : {
-            printf("not implemented something in add_expression\n");
+            printf("not implemented something in remove_expression\n");
             exit(1);
         }
     }
@@ -289,16 +291,23 @@ void only_add_bodyvars(Statement *statement, Vars *vars_used) {
 	}
 } //todo
 
+void print_list(Vars *vars);
+
 void remove_from_set(char *varName, Vars **var_set) {
+	// printf("WE ARE IN REMOVE FROM SET and removing %s\n", varName);
+	// printf("IT WAS INITIALLY\n");
+	// print_list(*var_set);
 	if((*var_set)->first == NULL) return;
 	if(strcmp((*var_set)->first->name, varName) == 0) {
-		if((*var_set)->rest == NULL) *var_set = NEW(Vars);
+		printf("GOTCHA1\n");
+		if((*var_set)->rest == NULL) (*var_set)->first = NULL;
 		else *var_set = (*var_set)->rest;
 		return;
 	}
 	Vars *temp = *var_set;
 	Vars *temp2 = (*var_set)->rest;
 	while(temp2 != NULL) {
+		printf("GOTCHA2\n");
 		if(strcmp(temp2->first->name, varName) == 0) {
 			temp->rest = temp2->rest;
 			free(temp2);
@@ -307,9 +316,20 @@ void remove_from_set(char *varName, Vars **var_set) {
 		temp = temp2;
 		temp2 = temp2->rest;
 	}
+
+	// printf("AND NOW\n");
+	// print_list(*var_set);
+}
+
+void print_list(Vars* vars) {
+	while(vars != NULL && vars->first != NULL) {
+		printf("%s\n", vars->first->name);
+		vars = vars->rest;
+	}
 }
 
 int in_set(char *varName, Vars *var_set) {
+	print_list(var_set);
 	if(var_set->first == NULL) return 0;
 	while(var_set != NULL) {
 		if(strcmp(var_set->first->name, varName) == 0) return 1;
@@ -358,6 +378,7 @@ void remove_scan(Statement *statement, Vars *vars_used) {
 
 void remove_assignment(Statement *statement, Vars *vars_used) {
 	if(in_set(statement->assignName, vars_used)) {
+		printf("IT IS IN SET MUHAHAHAHAHAHA\n\n\n");
 		remove_from_set(statement->assignName, &vars_used);
 		set_add(statement->assignValue, vars_used);
 	}
@@ -480,6 +501,7 @@ int main(int argc, char *argv[]) {
 	Funs *p = parse();
 	// find_semantics(p, NULL);
 	optimize(p);
+	// print_semantics(p);
 	gen_code(p);
 
 }
