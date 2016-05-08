@@ -485,6 +485,7 @@ void remove_code(Funs *funs) {
 }
 
 void optimize(Funs *funs) {
+	if (funs == NULL || funs->first == NULL || funs->rest != NULL) return;
 	find_semantics(funs, NULL);
 	remove_code(funs);
 }
