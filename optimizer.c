@@ -484,8 +484,69 @@ void remove_code(Funs *funs) {
 	}
 }
 
+int expression_has_call(Expression *expression) {
+	switch(expression->kind) {
+	case eVAR :
+    case eVAL : {
+    	return 0;
+    }
+    case ePLUS :
+    case eMINUS :
+    case eMUL :
+    case eDIV :
+    case eEQ :
+    case eNE :
+    case eLT :
+    case eGT : {
+    	return (expression_has_call(expression->left) || expression_has_call(expression->right));
+    }
+    case eCALL : return 1;
+	}
+}
+
+int statement_has_calls(Statement *statement) {
+	switch(statement->kind) {
+		case sAssignment : {
+			return expression_has_call(statement->assignValue);
+		}
+		case sPrint : {
+			return expression_has_call(statement->printValue);
+		}
+		case sScan :
+		case sBind :
+		case sAsync :
+		case sAwait : {
+			return 0;
+		}
+		case sIf : {
+			int result = statement_has_calls(statement->ifThen);
+			if(statement->ifElse != NULL) result |= statement_has_calls(statement->ifElse);
+			return result;
+		}
+		case sWhile : {
+			return statement_has_calls(statement->whileBody);
+		}
+		case sBlock : {
+			Block *block = statement->block;
+			while(block != NULL) {
+				if(statement_has_calls(block->first)) return 1;
+				block = block->rest;
+			}
+			return 0;
+		}
+		case sReturn : return 1;
+		case sNull : return 0;
+	}
+}
+
+int has_calls(Fun *fun) {
+	if(statement_has_calls(fun->body)) return 1;
+	return 0;
+}
+
 void optimize(Funs *funs) {
 	if (funs == NULL || funs->first == NULL || funs->rest != NULL) return;
+	if(has_calls(funs->first)) return;
 	find_semantics(funs, NULL);
 	remove_code(funs);
 }
