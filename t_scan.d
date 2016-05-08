@@ -1,1 +1,1 @@
-t_scan.o: t_scan.S
+t_scan.o: t_scan.S /usr/include/stdc-predef.h

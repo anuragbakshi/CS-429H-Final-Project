@@ -1,1 +1,1 @@
-t_math.o: t_math.S
+t_math.o: t_math.S /usr/include/stdc-predef.h

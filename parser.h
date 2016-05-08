@@ -1,7 +1,56 @@
 #ifndef _PARSER_H_
 #define _PARSER_H_
 
+#include <string.h>
 #include <stdint.h>
+#include <stdbool.h>
+
+#define NEW(typ) ((typ*)calloc(1, sizeof(typ)))
+
+// make iterating over linked lists easy
+#define FOREACH(START) for(typeof(*(START)) *__item = (START); __item != NULL; __item = __item->rest)
+
+// void (list<T> **, T *)
+#define STACK_PUSH(stack, item) ({ \
+	typeof(*(stack)) __new_node = NEW(typeof(**(stack))); \
+	__new_node->first = (item); \
+	__new_node->rest = *(stack); \
+	*(stack) = __new_node; \
+})
+
+// T *(list<T> **)
+#define STACK_POP(stack) ({ \
+	typeof(*(stack)) __top_node = *(stack); \
+	*(stack) = __top_node->rest; \
+	__top_node->first; \
+})
+
+// size_t (list<T> *)
+#define LIST_LEN(list) ({ \
+	size_t __len = 0; \
+	FOREACH(list) ++__len; \
+	__len; \
+})
+
+// void (list<T> **)
+#define LIST_REVERSE(list) ({ \
+	typeof(*(list)) __node = (*list); \
+	typeof(*(list)) __next = NULL; \
+	typeof(*(list)) __prev = NULL; \
+\
+	size_t __n = 1; \
+	while(__node != NULL) { \
+		__next = __node->rest; \
+		__node->rest = __prev; \
+		__node->n = __n; \
+\
+		__prev = __node; \
+		__node = __next; \
+		++__n; \
+	} \
+\
+	*list = __prev; \
+})
 
 struct Expression;
 typedef struct Expression Expression;
@@ -9,8 +58,34 @@ typedef struct Expression Expression;
 struct Statement;
 typedef struct Statement Statement;
 
-struct Fun;
-typedef struct Fun Fun;
+typedef struct Var {
+	char *name;
+	bool local;
+} Var;
+
+typedef struct Vars {
+	Var *first;
+	struct Vars *rest;
+} Vars;
+
+typedef struct Closure {
+	struct {
+		char *name;
+		char *funName;
+		size_t numArgs;
+	};
+} Closure;
+
+typedef struct Closures {
+	Closure *first;
+	struct Closures *rest;
+} Closures;
+
+typedef struct Semantics {
+	Vars *modifies;
+	Vars *depends;
+	bool anchor;
+} Semantics;
 
 typedef struct Actuals {
 	int n;
@@ -74,6 +149,7 @@ enum SKind {
 	sAssignment,
 	sPrint,
 	sScan,
+	sBind,
 	sIf,
 	sWhile,
 	sBlock,
@@ -82,31 +158,44 @@ enum SKind {
 
 struct Statement {
 	enum SKind kind;
-	union {
+	Semantics *semantics;
+	bool needed;
+    bool processed;
+    bool absolute;
+    union {
 		struct {
 			char *assignName;
 			Expression *assignValue;
 		};
+
 		Expression *printValue;
 		char *scanVar;
+
+		struct {
+			Closure *closure;
+			Actuals *closureActuals;
+		};
+
 		struct {
 			Expression *ifCondition;
 			Statement *ifThen;
 			Statement *ifElse;
 		};
+
 		struct {
 			Expression *whileCondition;
 			Statement *whileBody;
 		};
+
 		Block *block;
 		Expression *returnValue;
 	};
 };
 
-typedef struct Formal {
-	char *name;
-	Fun *func;
-} Formal;
+typedef struct Statements {
+	Statement *first;
+	struct Statements *rest;
+} Statements;
 
 typedef struct Formals {
 	int n;

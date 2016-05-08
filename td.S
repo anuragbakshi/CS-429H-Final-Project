@@ -1,9 +1,10 @@
 .text
-	.global _main
-	.extern _printf
-	.extern _scanf
+	.global main
+	.extern printf
+	.extern scanf
+	.extern memcpy
 
-_main:
+main:
 	jmp main_fun
 
 it_fun:
@@ -12,7 +13,8 @@ it_fun:
 	push 16(%rbp)
 	lea printf_format(%rip), %rdi
 	pop %rsi
-	call _printf
+	mov $0, %rax
+	call printf
 	push $0
 	pop %rax
 	mov %rbp, %rsp
@@ -22,18 +24,14 @@ it_fun:
 main_fun:
 	push %rbp
 	mov %rsp, %rbp
-	sub $8, %rsp
 	push $0
 	call it_fun
-	add $8, %rsp
 	push %rax
 	pop %rax
 	mov %rax, x_var(%rip)
-	sub $8, %rsp
 	push $0
 	push $1
 	call it_fun
-	add $8, %rsp
 	push %rax
 	pop %rax
 	mov %rax, x_var(%rip)
@@ -52,18 +50,15 @@ main_fun:
 	push %rax
 	pop %rax
 	mov %rax, x_var(%rip)
-	sub $8, %rsp
 	push $0
 	push $1
 	push $2
 	push $3
 	push $4
 	call it_fun
-	add $8, %rsp
 	push %rax
 	pop %rax
 	mov %rax, x_var(%rip)
-	sub $8, %rsp
 	push $0
 	push $1
 	push $2
@@ -71,7 +66,6 @@ main_fun:
 	push $4
 	push $5
 	call it_fun
-	add $8, %rsp
 	push %rax
 	pop %rax
 	mov %rax, x_var(%rip)
@@ -98,7 +92,6 @@ main_fun:
 	push %rax
 	pop %rax
 	mov %rax, x_var(%rip)
-	sub $8, %rsp
 	push $0
 	push $1
 	push $2
@@ -109,11 +102,9 @@ main_fun:
 	push $7
 	push $8
 	call it_fun
-	add $8, %rsp
 	push %rax
 	pop %rax
 	mov %rax, x_var(%rip)
-	sub $8, %rsp
 	push $0
 	push $1
 	push $2
@@ -125,7 +116,6 @@ main_fun:
 	push $8
 	push $9
 	call it_fun
-	add $8, %rsp
 	push %rax
 	pop %rax
 	mov %rax, x_var(%rip)
@@ -141,7 +131,6 @@ main_fun:
 	ret
 
 .data
-	printf_format: .string "%d\n"
-	scanf_format: .string "%d"
-	x_var: .quad 0
-	x_name: .string "x"
+printf_format: .string "%d\n"
+scanf_format: .string "%d"
+x_var: .quad 0

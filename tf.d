@@ -1,1 +1,1 @@
-tf.o: tf.S
+tf.o: tf.S /usr/include/stdc-predef.h

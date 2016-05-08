@@ -1,9 +1,10 @@
 .text
-	.global _main
-	.extern _printf
-	.extern _scanf
+	.global main
+	.extern printf
+	.extern scanf
+	.extern memcpy
 
-_main:
+main:
 	jmp main_fun
 
 a_fun:
@@ -40,22 +41,20 @@ main_fun:
 	push $100
 	pop %rax
 	mov %rax, x_var(%rip)
-	sub $8, %rsp
 	push $20
 	call a_fun
-	add $8, %rsp
 	push %rax
 	lea printf_format(%rip), %rdi
 	pop %rsi
-	sub $8, %rsp
-	call _printf
-	add $8, %rsp
+	mov $0, %rax
+	call printf
 	push $30
 	call b_fun
 	push %rax
 	lea printf_format(%rip), %rdi
 	pop %rsi
-	call _printf
+	mov $0, %rax
+	call printf
 	push $0
 	pop %rax
 	mov %rbp, %rsp
@@ -63,7 +62,6 @@ main_fun:
 	ret
 
 .data
-	printf_format: .string "%d\n"
-	scanf_format: .string "%d"
-	x_var: .quad 0
-	x_name: .string "x"
+printf_format: .string "%d\n"
+scanf_format: .string "%d"
+x_var: .quad 0

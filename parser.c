@@ -4,7 +4,14 @@
 #include <string.h>
 #include "parser.h"
 
-#define NEW(typ) ((typ*)malloc(sizeof(typ)))
+/*
+New syntax:
+scan [var]
+bind [closure], [fun], ([args...])
+
+async [handle], [fun]
+await [retval], [handle]
+*/
 
 /* Kinds of tokens */
 enum TKind {
@@ -31,6 +38,7 @@ enum TKind {
 	tNE,
 	tPRINT,
 	tSCAN,
+	tBIND,
 	tFUN,
 	tCOMMA,
 	tRETURN
@@ -104,6 +112,7 @@ static void peekId(void) {
 		const int c = peekChar();
 		switch (c) {
 		case 'a' ... 'z':
+		case '_':
 		case '0' ... '9':
 			consumeChar();
 			len++;
@@ -122,6 +131,8 @@ static void peekId(void) {
 				current.kind = tPRINT;
 			} else if (strcmp(current.ptr, "scan") == 0) {
 				current.kind = tSCAN;
+			} else if (strcmp(current.ptr, "bind") == 0) {
+				current.kind = tBIND;
 			} else if (strcmp(current.ptr, "fun") == 0) {
 				current.kind = tFUN;
 			} else if (strcmp(current.ptr, "return") == 0) {
@@ -157,6 +168,7 @@ static void peek() {
 				peekInt();
 				return;
 			case 'a' ... 'z':
+			case '_':
 				peekId();
 				return;
 			case '(':
@@ -224,7 +236,7 @@ static void peek() {
 				consumeChar();
 				break;
 			default:
-				printf("undefined char %d\n", c);
+				printf("undefined char %1$c (%1$d)\n", c);
 				error();
 			}
 		}
@@ -268,6 +280,11 @@ static int isPrint() {
 static int isScan() {
 	peek();
 	return current.kind == tSCAN;
+}
+
+static int isBind() {
+	peek();
+	return current.kind == tBIND;
 }
 
 static int isIf() {
@@ -427,26 +444,27 @@ static Expression *e1(void) {
 
 			e->callName = id;
 			e->callActuals = actuals();
+			LIST_REVERSE(&e->callActuals);
 
-			// ********
-			Actuals *node = e->callActuals;
-			Actuals *next = NULL;
-			Actuals *prev = NULL;
-
-			int n = 1;
-			while(node != NULL) {
-				// printf("%d\n", node->n);
-				next = node->rest;
-				node->rest = prev;
-				node->n = n;
-
-				prev = node;
-				node = next;
-				++n;
-			}
-
-			e->callActuals = prev;
-			// ********
+			// // ********
+			// Actuals *node = e->callActuals;
+			// Actuals *next = NULL;
+			// Actuals *prev = NULL;
+			//
+			// int n = 1;
+			// while(node != NULL) {
+			// 	// printf("%d\n", node->n);
+			// 	next = node->rest;
+			// 	node->rest = prev;
+			// 	node->n = n;
+			//
+			// 	prev = node;
+			// 	node = next;
+			// 	++n;
+			// }
+			//
+			// e->callActuals = prev;
+			// // ********
 
 			if (!isRight())
 				error();
@@ -608,6 +626,53 @@ static Statement *statement(void) {
 			error();
 
 		p->scanVar = getId();
+		consume();
+
+		if (isSemi()) {
+			consume();
+		}
+
+		return p;
+	} else if (isBind()) {
+		Statement *p = NEW(Statement);
+		p->closure = NEW(Closure);
+		p->kind = sBind;
+
+		consume();
+
+		// get closure name
+		if(!isId())
+			error();
+
+		p->closure->name = getId();
+		consume();
+
+		if(!isComma())
+			error();
+		consume();
+
+		// get fun name
+		if(!isId())
+			error();
+
+		p->closure->funName = getId();
+		consume();
+
+		if(!isComma())
+			error();
+		consume();
+
+		// get args to bind
+		if(!isLeft())
+			error();
+		consume();
+
+		p->closureActuals = actuals();
+		p->closure->numArgs = (p->closureActuals != NULL) ? p->closureActuals->n : 0;
+		LIST_REVERSE(&p->closureActuals);
+
+		if(!isRight())
+			error();
 		consume();
 
 		if (isSemi()) {

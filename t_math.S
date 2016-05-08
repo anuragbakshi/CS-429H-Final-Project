@@ -1,9 +1,10 @@
 .text
-	.global _main
-	.extern _printf
-	.extern _scanf
+	.global main
+	.extern printf
+	.extern scanf
+	.extern memcpy
 
-_main:
+main:
 	jmp main_fun
 
 main_fun:
@@ -51,19 +52,23 @@ main_fun:
 	push add_var(%rip)
 	lea printf_format(%rip), %rdi
 	pop %rsi
-	call _printf
+	mov $0, %rax
+	call printf
 	push sub_var(%rip)
 	lea printf_format(%rip), %rdi
 	pop %rsi
-	call _printf
+	mov $0, %rax
+	call printf
 	push mul_var(%rip)
 	lea printf_format(%rip), %rdi
 	pop %rsi
-	call _printf
+	mov $0, %rax
+	call printf
 	push div_var(%rip)
 	lea printf_format(%rip), %rdi
 	pop %rsi
-	call _printf
+	mov $0, %rax
+	call printf
 	push $0
 	pop %rax
 	mov %rbp, %rsp
@@ -71,17 +76,11 @@ main_fun:
 	ret
 
 .data
-	printf_format: .string "%d\n"
-	scanf_format: .string "%d"
-	div_var: .quad 0
-	div_name: .string "div"
-	mul_var: .quad 0
-	mul_name: .string "mul"
-	sub_var: .quad 0
-	sub_name: .string "sub"
-	add_var: .quad 0
-	add_name: .string "add"
-	b_var: .quad 0
-	b_name: .string "b"
-	a_var: .quad 0
-	a_name: .string "a"
+printf_format: .string "%d\n"
+scanf_format: .string "%d"
+div_var: .quad 0
+mul_var: .quad 0
+sub_var: .quad 0
+add_var: .quad 0
+b_var: .quad 0
+a_var: .quad 0
