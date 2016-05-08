@@ -72,7 +72,7 @@ void add_expression(Vars **depends, Expression *assignValue) {
 
 		} break;
 		default : {
-			printf("not implemented something in add_expression\n");
+			// printf("not implemented something in add_expression\n");
 			exit(1);
 		}
 	}
@@ -104,7 +104,7 @@ void remove_expression(Vars **legacy, Expression *expression) {
         } break;
 
         default : {
-            printf("not implemented something in remove_expression\n");
+            // printf("not implemented something in remove_expression\n");
             exit(1);
         }
     }
@@ -136,7 +136,7 @@ void handle_scan(Statement *statement, Vars *legacy) {
 void handle_if(Statement *statement, Vars *legacy) {
     add_expression(&legacy, statement->ifCondition);
     if(statement->ifThen != NULL) handle_statement(statement->ifThen, legacy);
-    printf("The ifelse is %d", (int)(statement->ifElse));
+    // printf("The ifelse is %d", (int)(statement->ifElse));
     if(statement->ifElse != NULL) handle_statement(statement->ifElse, legacy);
     remove_expression(&legacy, statement->ifCondition);
 }
@@ -155,7 +155,7 @@ void handle_block(Statement *statement, Vars *legacy) {
 }
 
 void handle_return(Statement *statement, Vars *legacy) {
-	printf("not implemented everything yet return\n");
+	// printf("not implemented everything yet return\n");
 	exit(1);
 }
 
@@ -202,7 +202,7 @@ void mark_needed(Vars *vars, Statements *statements) {
 	// recursively mark statements to keep
 	while(vars != NULL) {
 		Var *v = STACK_POP(&vars);
-		printf("%s\n", v->name);
+		// printf("%s\n", v->name);
 
 		// go through all previous statements
 		FOREACH(statements) {
@@ -294,22 +294,22 @@ void only_add_bodyvars(Statement *statement, Vars **vars_used) {
 void print_list(Vars *vars);
 
 void remove_from_set(char *varName, Vars **var_set) {
-	printf("WE ARE IN REMOVE FROM SET and removing %s\n", varName);
-	printf("IT WAS INITIALLY\n");
+	// printf("WE ARE IN REMOVE FROM SET and removing %s\n", varName);
+	// printf("IT WAS INITIALLY\n");
 	print_list(*var_set);
 	if((*var_set)->first == NULL) return;
 	if(strcmp((*var_set)->first->name, varName) == 0) {
-		// printf("GOTCHA1\n");
+		// // printf("GOTCHA1\n");
 		if((*var_set)->rest == NULL) (*var_set)->first = NULL;
 		else *var_set = (*var_set)->rest;
-		printf("AND NOW\n");
+		// printf("AND NOW\n");
 		print_list(*var_set);
 		return;
 	}
 	Vars *temp = *var_set;
 	Vars *temp2 = (*var_set)->rest;
 	while(temp2 != NULL) {
-		// printf("GOTCHA2\n");
+		// // printf("GOTCHA2\n");
 		if(strcmp(temp2->first->name, varName) == 0) {
 			temp->rest = temp2->rest;
 			free(temp2);
@@ -319,13 +319,13 @@ void remove_from_set(char *varName, Vars **var_set) {
 		temp2 = temp2->rest;
 	}
 
-	printf("AND NOW\n");
+	// printf("AND NOW\n");
 	print_list(*var_set);
 }
 
 void print_list(Vars* vars) {
 	while(vars != NULL && vars->first != NULL) {
-		printf("%s\n", vars->first->name);
+		// printf("%s\n", vars->first->name);
 		vars = vars->rest;
 	}
 }
@@ -396,11 +396,11 @@ void remove_block(Block *block, Vars **vars_used) {
 	if(block == NULL) return;
 	Statements *block_body = make_stack(block);
 	while(block_body != NULL) {
-		printf("~~~~~~~~~~~~~~~~~~~~\n");
-		printf("IN BLOCK THE SET IS\n");
-		printf("~~~~~~~~~~~~~~~~~~~~\n");
+		// printf("~~~~~~~~~~~~~~~~~~~~\n");
+		// printf("IN BLOCK THE SET IS\n");
+		// printf("~~~~~~~~~~~~~~~~~~~~\n");
 		print_list(*vars_used);
-		printf("~~~~~~~~~~~~~~~~~~~~\n");
+		// printf("~~~~~~~~~~~~~~~~~~~~\n");
 		remove_code_statement(block_body->first, vars_used);
 		block_body = block_body->rest;
 	}
@@ -408,28 +408,28 @@ void remove_block(Block *block, Vars **vars_used) {
 }
 
 void remove_scan(Statement *statement, Vars **vars_used) {
-	if(in_set(statement->scanVar, *vars_used)) remove_from_set(statement->scanVar, vars_used); 
-	else statement->kind = sNull; 
+	if(in_set(statement->scanVar, *vars_used)) remove_from_set(statement->scanVar, vars_used);
+	else statement->kind = sNull;
 }
 
 void remove_assignment(Statement *statement, Vars **vars_used) {
 
-	printf("WE ARE IN ASSIGN\n");
-	printf("WE ARE ASSIGNING TO %s\n", statement->assignName);
-	printf("The depends are\n");
+	// printf("WE ARE IN ASSIGN\n");
+	// printf("WE ARE ASSIGNING TO %s\n", statement->assignName);
+	// printf("The depends are\n");
 	print_list(*vars_used);
 
 
 	if(in_set(statement->assignName, *vars_used)) {
-		// printf("IT IS IN SET MUHAHAHAHAHAHA\n\n\n");
-		printf("Before remove set %s it was\n", statement->assignName);
-		printf("In set\n");
+		// // printf("IT IS IN SET MUHAHAHAHAHAHA\n\n\n");
+		// printf("Before remove set %s it was\n", statement->assignName);
+		// printf("In set\n");
 		print_list(*vars_used);
 		remove_from_set(statement->assignName, vars_used);
-		printf("And after it was\n");
+		// printf("And after it was\n");
 		print_list(*vars_used);
 		set_add(statement->assignValue, *vars_used);
-		printf("but wait?\n");
+		// printf("but wait?\n");
 		print_list(*vars_used);
 	}
 	else statement->kind = sNull;
@@ -490,12 +490,12 @@ void optimize(Funs *funs) {
 
 void print_vars(Vars *v) {
 	if(v == NULL) {
-		printf("\tNONE\n");
+		// printf("\tNONE\n");
 	}
 
 	FOREACH(v) {
-		if(v->first->local) printf("\t%s is local\n", __item->first->name);
-		else printf("\t%s is not local\n", __item->first->name);
+		// if(v->first->local) printf("\t%s is local\n", __item->first->name);
+		// else printf("\t%s is not local\n", __item->first->name);
 	}
 }
 
@@ -505,31 +505,31 @@ void print_statement_semantics(Statement *s) {
 
 		switch (s->kind) {
 			case sBlock : {
-				printf("ENTERING BLOCK\n");
+				// printf("ENTERING BLOCK\n");
 				tempBlock = s->block;
 				FOREACH(tempBlock) {
 					print_statement_semantics(__item->first);
 				}
 			} break;
 			case sIf : {
-				printf("ENTERING IF\n");
-				printf("ENTERING IFTHEN\n");
+				// printf("ENTERING IF\n");
+				// printf("ENTERING IFTHEN\n");
 				if(s->ifThen != NULL) print_statement_semantics(s->ifThen);
-				printf("ENTERING IFELSE\n");
+				// printf("ENTERING IFELSE\n");
                 if(s->ifElse != NULL) print_statement_semantics(s->ifElse);
 			} break;
 			case sWhile : {
-				printf("ENTERING WHILE\n");
+				// printf("ENTERING WHILE\n");
 				print_statement_semantics(s->whileBody);
 			} break;
 			default : {
-			printf("printing mods\n");
+			// printf("printing mods\n");
 			print_vars(s->semantics->modifies);
-			printf("printing depends\n");
+			// printf("printing depends\n");
 			print_vars(s->semantics->depends);
-			if(s->semantics->anchor) printf("Is an anchor\n");
-			if(s->needed) printf("Is needed\n");
-			printf("\n");
+			// if(s->semantics->anchor) printf("Is an anchor\n");
+			// if(s->needed) printf("Is needed\n");
+			// printf("\n");
 			}
 		}
 
@@ -537,7 +537,7 @@ void print_statement_semantics(Statement *s) {
 }
 
 void print_func_semantics(Fun *f) {
-	printf("PRINTING DEPENDENCIES FOR %s\n", f->name);
+	// printf("PRINTING DEPENDENCIES FOR %s\n", f->name);
 	print_statement_semantics(f->body);
 }
 
@@ -545,15 +545,4 @@ void print_semantics(Funs *funs) {
 	FOREACH(funs) {
 		print_func_semantics(__item->first);
 	}
-}
-
-int main(int argc, char *argv[]) {
-
-	// parse the code
-	Funs *p = parse();
-	// find_semantics(p, NULL);
-	optimize(p);
-	// print_semantics(p);
-	gen_code(p);
-
 }

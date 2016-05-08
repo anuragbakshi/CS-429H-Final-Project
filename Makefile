@@ -11,8 +11,8 @@ RESULTS=$(patsubst %.fun,%.result,$(TESTS))
 # CFLAGS=-g -std=gnu99 -O0 -Werror -Wall
 CFLAGS=-g -std=gnu99 -O0
 
-p4 : p4.o parser.o Makefile
-	gcc $(CFLAGS) -o p4 p4.o parser.o
+p4 : p4.o parser.o Makefile optimizer.o
+	gcc $(CFLAGS) -o p4 p4.o parser.o optimizer.o
 # p4 : optimizer.o parser.o Makefile
 # 	gcc $(CFLAGS) -o p4 optimizer.o parser.o
 

@@ -567,7 +567,7 @@ void genReturn(Statement *statement, Formals *scope) {
 	printf("	ret\n");
 }
 
-void gen_code(Funs *tree) {
+int main() {
 	// set up the default return statement
 	defaultReturn = calloc(1, sizeof(Statement));
 	defaultReturn->kind = sReturn;
@@ -577,8 +577,10 @@ void gen_code(Funs *tree) {
 	defaultReturn->returnValue->val = 0;
 
 	// parse the code
-	funs = tree;
-	// Funs *p = parse();
+	// funs = tree;
+	funs = parse();
+
+	optimize(funs);
 
 	// begin the .text section (code)
 	printf(".text\n");
@@ -616,4 +618,6 @@ void gen_code(Funs *tree) {
 	FOREACH(closures) {
 		printf("%s_closure_data: .zero %lu\n", __item->first->name, __item->first->numArgs * 8);
 	}
+
+	return 0;
 }
