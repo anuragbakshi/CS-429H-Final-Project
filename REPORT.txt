@@ -1,13 +1,58 @@
-Contribution of each team member:
-
-
 What did you propose to do?
 
+    We originally proposed to:
+    1. To optimize the fun-to-asm compiler.
+    2. To add I/O to fun.
+    3. To add more arithmetic operators to fun.
+
+    Our goal for the optimizer was to remove code without visible side effects.
+    For I/O, we wanted there to be a way to input integers at runtime so that
+    optimizing the compiler is more interesting.
+    We wanted to add  more operators to make fun more usable.
 
 what did you actually do?
 
+    We succeeded in adding I/O and arithmetic operators to fun. We also added
+    optimization to the compiler. However, we only consider the case when
+    we have a single main function for optimizations- function calling is
+    not supported. To make up for this fact, we added threads and closures
+    to fun.
+
+Contribution of each team member:
+
+    Anurag:
+    Added I/O, arithmetic operators, threads and closures.
+
+    Harsh:
+    Added dependency analysis and compiler optimizations.
 
 What was difficult?
 
+    Harsh:
+    Adding compiler optimizations turned out it turned out to be much trickier
+    than we expected, since:
+
+    1. Removing code is harder in an environment where all variables are
+       global and thus dependencies can be really hard to figure out.
+
+    2. Recursion (especially in cases when two functions are calling each
+       other) make dependency analysis much harder.
+    
+    3. There is little concept of sequential code in while loops which again
+       makes dependency analysis hard.
+
+    Therefore, we consider only the cases when there is a single main function.
+    In case there are while loops, we consider add all r-variables within the
+    the body to are dependency list.
 
 What did you learn?
+
+    Harsh:
+    I learned a lot about program slicing over the course of this project. It
+    also gave me an insight about how much code in a program can simply be
+    removed without the user noticing. While our compiler optimizations were
+    relatively simplistic, they manage to remove a significant amount of
+    redundant code, as can be seen by comparing the assembly output from
+    rremove_test_1a, remove_test_1b and remove_test_1c.
+
+
