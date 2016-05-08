@@ -163,6 +163,7 @@ enum SKind {
 	sWhile,
 	sBlock,
 	sReturn,
+    sNull,
 };
 
 struct Statement {
@@ -235,5 +236,6 @@ typedef struct Funs {
 } Funs;
 
 extern Funs *parse();
+extern void gen_code(Funs *tree);
 
 #endif

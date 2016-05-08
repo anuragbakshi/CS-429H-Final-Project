@@ -4,6 +4,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include "parser.h"
+#include "optimizer.h"
 
 /*
 REFERENCES:
@@ -226,6 +227,7 @@ void genStatement(Statement *statement, Formals *scope) {
 		case sReturn: {
 			genReturn(statement, scope);
 		} break;
+		default : break;
 	}
 }
 
@@ -645,7 +647,7 @@ void genReturn(Statement *statement, Formals *scope) {
 	printf("	ret\n");
 }
 
-int main(int argc, char *argv[]) {
+void gen_code(Funs *tree) {
 	// set up the default return statement
 	defaultReturn = calloc(1, sizeof(Statement));
 	defaultReturn->kind = sReturn;
@@ -655,7 +657,7 @@ int main(int argc, char *argv[]) {
 	defaultReturn->returnValue->val = 0;
 
 	// parse the code
-	funs = parse();
+	funs = tree;
 	// Funs *p = parse();
 
 	// begin the .text section (code)
@@ -697,6 +699,4 @@ int main(int argc, char *argv[]) {
 	FOREACH(closures) {
 		printf("%s_closure_data: .zero %lu\n", __item->first->name, __item->first->numArgs * 8);
 	}
-
-	return 0;
 }
