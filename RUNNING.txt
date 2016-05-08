@@ -11,3 +11,5 @@ t_scan: tests the new "scan" keyword to read from stdin in a few cases (in main,
 t_closures: tests the "bind" keyword in a few situations
 t_concurrency_easy: tests basic creation and joining of async tasks
 t_concurrency: comprehensively tests async/await and closures in various cases (in main, in functions, in loops, in recursion)
+
+All of these tests together comprehensively test all the new language additions in several realistic use cases and demonstrate that the project works as intended. (Note: the concurrency tests may fail as the threads may be executed in an unpredictable order. The ok files were created according to how it ran on my single CPU VM)
