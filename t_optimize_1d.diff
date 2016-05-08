@@ -1,0 +1,7 @@
+===> t_optimize_1d ... fail
+----- expected ------
+----- found -----
+39
+25
+19
+29
