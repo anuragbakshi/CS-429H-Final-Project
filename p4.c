@@ -148,14 +148,23 @@ void genClosure(Closure *closure) {
 	size_t argsSize = closure->numArgs * 8;
 
 	// pop the return address
-	printf("	pop %%rbx\n");
+	// printf("	pop %%rbx\n");
+	// printf("	xchg %%rbx, (%%rsp)\n");
+
+	// get the return address
+	printf("	pop %%rax\n");
 
 	// allocate space for the arguments
 	printf("	sub $%lu, %%rsp\n", argsSize);
 
+	// put the return address back
+	// printf("	mov %%rax, %lu(%%rsp)\n", argsSize);
+	printf("	push %%rax\n");
+
 	// copy them using memcpy
 	// printf("	lea %lu(%%rsp), %%rdi\n", argsSize);
-	printf("	mov %%rsp, %%rdi\n");
+	// printf("	mov %%rsp, %%rdi\n");
+	printf("	lea 8(%%rsp), %%rdi\n");
 	printf("	lea %s_closure_data(%%rip), %%rsi\n", closure->name);
 	printf("	mov $%lu, %%rdx\n", argsSize);
 
@@ -163,7 +172,8 @@ void genClosure(Closure *closure) {
 	printf("	call %s\n", MEMCPY_NAME);
 
 	// put the return address back
-	printf("	push %%rbx\n");
+	// printf("	push %%rbx\n");
+	// printf("	xchg %%rbx, (%%rsp)\n");
 
 	// jump to the function
 	printf("	jmp %s_fun\n", closure->funName);
@@ -523,6 +533,7 @@ void genAsync(Statement *statement, Formals *scope) {
 	printf("	mov $0, %%rsi\n");
 	// void *(*start_routine)(void *)
 	// TODO: doesn't work, will start writing (struct pthread_t) there
+	// TODO: should work since (struct pthread_t) is just a long
 	printf("	lea %s_fun(%%rip), %%rdx\n", statement->asyncFunName);
 	// void *arg
 	printf("	mov $0, %%rcx\n");
