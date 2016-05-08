@@ -229,5 +229,6 @@ typedef struct Funs {
 } Funs;
 
 extern Funs *parse();
+extern void gen_code(Funs *tree);
 
 #endif

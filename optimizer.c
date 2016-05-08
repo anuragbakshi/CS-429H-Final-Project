@@ -6,7 +6,15 @@
 
 #include <stdbool.h>
 #include <string.h>
-#include <inttypes.h>
+
+#define PRINTF_NAME "printf"
+#define SCANF_NAME "scanf"
+// #define CALLOC_NAME "calloc"
+#define MEMCPY_NAME "memcpy"
+#define PCREATE_NAME "pthread_create"
+#define PJOIN_NAME "pthread_join"
+#define MAIN_NAME "main"
+
 
 void set_add(Expression *expression, Vars *vars_used);
 
@@ -225,6 +233,7 @@ void set_add_one_var(Var *v, Vars *vars) {
 }
 
 void get_vars(Expression *expression, Vars *vars) {
+	if(expression == NULL || vars == NULL) return; //DEBUGGING
 	Vars *temp;
 	switch(expression->kind) {
 		case eVAR : {
@@ -242,7 +251,7 @@ void get_vars(Expression *expression, Vars *vars) {
 		case eGT: {
 			get_vars(expression->left, vars);
 			get_vars(expression->right, vars);
-		}
+		} break;
 		default : break;
 	}
 }
@@ -471,6 +480,6 @@ int main(int argc, char *argv[]) {
 	Funs *p = parse();
 	// find_semantics(p, NULL);
 	optimize(p);
-	print_semantics(p);
+	gen_code(p);
 
 }
