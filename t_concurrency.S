@@ -204,54 +204,6 @@ main_fun:
 	mov $0, %rcx
 	mov $0, %rax
 	call pthread_create
-	lea handle_f_13_var(%rip), %rdi
-	mov $0, %rsi
-	lea f_13_fun(%rip), %rdx
-	mov $0, %rcx
-	mov $0, %rax
-	call pthread_create
-	lea handle_f_14_var(%rip), %rdi
-	mov $0, %rsi
-	lea f_14_fun(%rip), %rdx
-	mov $0, %rcx
-	mov $0, %rax
-	call pthread_create
-	lea handle_f_15_var(%rip), %rdi
-	mov $0, %rsi
-	lea f_15_fun(%rip), %rdx
-	mov $0, %rcx
-	mov $0, %rax
-	call pthread_create
-	lea handle_f_16_var(%rip), %rdi
-	mov $0, %rsi
-	lea f_16_fun(%rip), %rdx
-	mov $0, %rcx
-	mov $0, %rax
-	call pthread_create
-	lea handle_f_17_var(%rip), %rdi
-	mov $0, %rsi
-	lea f_17_fun(%rip), %rdx
-	mov $0, %rcx
-	mov $0, %rax
-	call pthread_create
-	lea handle_f_18_var(%rip), %rdi
-	mov $0, %rsi
-	lea f_18_fun(%rip), %rdx
-	mov $0, %rcx
-	mov $0, %rax
-	call pthread_create
-	lea handle_f_19_var(%rip), %rdi
-	mov $0, %rsi
-	lea f_19_fun(%rip), %rdx
-	mov $0, %rcx
-	mov $0, %rax
-	call pthread_create
-	lea handle_f_20_var(%rip), %rdi
-	mov $0, %rsi
-	lea f_20_fun(%rip), %rdx
-	mov $0, %rcx
-	mov $0, %rax
-	call pthread_create
 	push handle_f_01_var(%rip)
 	pop %rdi
 	lea result_f_01_var(%rip), %rsi
@@ -310,46 +262,6 @@ main_fun:
 	push handle_f_12_var(%rip)
 	pop %rdi
 	lea result_f_12_var(%rip), %rsi
-	mov $0, %rax
-	call pthread_join
-	push handle_f_13_var(%rip)
-	pop %rdi
-	lea result_f_13_var(%rip), %rsi
-	mov $0, %rax
-	call pthread_join
-	push handle_f_14_var(%rip)
-	pop %rdi
-	lea result_f_14_var(%rip), %rsi
-	mov $0, %rax
-	call pthread_join
-	push handle_f_15_var(%rip)
-	pop %rdi
-	lea result_f_15_var(%rip), %rsi
-	mov $0, %rax
-	call pthread_join
-	push handle_f_16_var(%rip)
-	pop %rdi
-	lea result_f_16_var(%rip), %rsi
-	mov $0, %rax
-	call pthread_join
-	push handle_f_17_var(%rip)
-	pop %rdi
-	lea result_f_17_var(%rip), %rsi
-	mov $0, %rax
-	call pthread_join
-	push handle_f_18_var(%rip)
-	pop %rdi
-	lea result_f_18_var(%rip), %rsi
-	mov $0, %rax
-	call pthread_join
-	push handle_f_19_var(%rip)
-	pop %rdi
-	lea result_f_19_var(%rip), %rsi
-	mov $0, %rax
-	call pthread_join
-	push handle_f_20_var(%rip)
-	pop %rdi
-	lea result_f_20_var(%rip), %rsi
 	mov $0, %rax
 	call pthread_join
 	push result_f_01_var(%rip)
@@ -412,46 +324,78 @@ main_fun:
 	pop %rsi
 	mov $0, %rax
 	call printf
-	push result_f_13_var(%rip)
+	push $1
+	call threaded_print_fun
+	push %rax
+	pop %rax
+	mov %rax, x_var(%rip)
+	push $2
+	call threaded_print_fun
+	push %rax
+	pop %rax
+	mov %rax, x_var(%rip)
+	push $3
+	call threaded_print_fun
+	push %rax
+	pop %rax
+	mov %rax, x_var(%rip)
+	push $4
+	call threaded_print_fun
+	push %rax
+	pop %rax
+	mov %rax, x_var(%rip)
+	push $0
+	pop %rax
+	mov %rax, i_var(%rip)
+	loop_0:
+	push $100
+	push i_var(%rip)
+	pop %rcx
+	pop %rax
+	cmp %rax, %rcx
+	mov $0, %rax
+	setb %al
+	push %rax
+	pop %rax
+	cmp $0, %rax
+	je after0
+	push i_var(%rip)
+	lea n_sum_const_closure_data(%rip), %rdi
+	mov %rsp, %rsi
+	mov $8, %rdx
+	call memcpy
+	add $8, %rsp
+	lea handle_n_sum_var(%rip), %rdi
+	mov $0, %rsi
+	lea n_sum_const_fun(%rip), %rdx
+	mov $0, %rcx
+	mov $0, %rax
+	call pthread_create
+	push handle_n_sum_var(%rip)
+	pop %rdi
+	lea n_sum_val_var(%rip), %rsi
+	mov $0, %rax
+	call pthread_join
+	push n_sum_val_var(%rip)
 	lea printf_format(%rip), %rdi
 	pop %rsi
 	mov $0, %rax
 	call printf
-	push result_f_14_var(%rip)
-	lea printf_format(%rip), %rdi
-	pop %rsi
-	mov $0, %rax
-	call printf
-	push result_f_15_var(%rip)
-	lea printf_format(%rip), %rdi
-	pop %rsi
-	mov $0, %rax
-	call printf
-	push result_f_16_var(%rip)
-	lea printf_format(%rip), %rdi
-	pop %rsi
-	mov $0, %rax
-	call printf
-	push result_f_17_var(%rip)
-	lea printf_format(%rip), %rdi
-	pop %rsi
-	mov $0, %rax
-	call printf
-	push result_f_18_var(%rip)
-	lea printf_format(%rip), %rdi
-	pop %rsi
-	mov $0, %rax
-	call printf
-	push result_f_19_var(%rip)
-	lea printf_format(%rip), %rdi
-	pop %rsi
-	mov $0, %rax
-	call printf
-	push result_f_20_var(%rip)
-	lea printf_format(%rip), %rdi
-	pop %rsi
-	mov $0, %rax
-	call printf
+	push i_var(%rip)
+	push $1
+	pop %rcx
+	pop %rax
+	add %rcx, %rax
+	push %rax
+	pop %rax
+	mov %rax, i_var(%rip)
+	jmp loop_0
+	after0:
+	push $100
+	call threaded_recursion_fun
+	push %rax
+	pop %rax
+	mov %rax, x_var(%rip)
 	push $0
 	pop %rax
 	mov %rbp, %rsp
@@ -467,7 +411,7 @@ factorial_fun:
 	push $1
 	pop %rax
 	mov %rax, ans_var(%rip)
-	loop_0:
+	loop_1:
 	push $0
 	push 16(%rbp)
 	pop %rcx
@@ -478,7 +422,7 @@ factorial_fun:
 	push %rax
 	pop %rax
 	cmp $0, %rax
-	je after0
+	je after1
 	push ans_var(%rip)
 	push 16(%rbp)
 	pop %rcx
@@ -495,8 +439,8 @@ factorial_fun:
 	push %rax
 	pop %rax
 	mov %rax, 16(%rbp)
-	jmp loop_0
-	after0:
+	jmp loop_1
+	after1:
 	push ans_var(%rip)
 	pop %rax
 	mov %rbp, %rsp
@@ -513,6 +457,162 @@ factorial_fun:
 	add $8, %rsp
 	push %rcx
 	ret
+
+n_sum_fun:
+	push %rbp
+	mov %rsp, %rbp
+	push 16(%rbp)
+	push 16(%rbp)
+	push $1
+	pop %rcx
+	pop %rax
+	add %rcx, %rax
+	push %rax
+	pop %rcx
+	pop %rax
+	mul %rcx
+	push %rax
+	push $2
+	pop %rcx
+	pop %rax
+	mov $0, %rdx
+	div %rcx
+	push %rax
+	pop %rax
+	mov %rbp, %rsp
+	pop %rbp
+	pop %rcx
+	add $8, %rsp
+	push %rcx
+	ret
+	push $0
+	pop %rax
+	mov %rbp, %rsp
+	pop %rbp
+	pop %rcx
+	add $8, %rsp
+	push %rcx
+	ret
+
+print_fun_fun:
+	push %rbp
+	mov %rsp, %rbp
+	push 16(%rbp)
+	lea printf_format(%rip), %rdi
+	pop %rsi
+	mov $0, %rax
+	call printf
+	push 16(%rbp)
+	pop %rax
+	mov %rbp, %rsp
+	pop %rbp
+	pop %rcx
+	add $8, %rsp
+	push %rcx
+	ret
+	push $0
+	pop %rax
+	mov %rbp, %rsp
+	pop %rbp
+	pop %rcx
+	add $8, %rsp
+	push %rcx
+	ret
+
+threaded_print_fun:
+	push %rbp
+	mov %rsp, %rbp
+	push 16(%rbp)
+	lea print_const_closure_data(%rip), %rdi
+	mov %rsp, %rsi
+	mov $8, %rdx
+	call memcpy
+	add $8, %rsp
+	lea handle_threaded_print_var(%rip), %rdi
+	mov $0, %rsi
+	lea print_const_fun(%rip), %rdx
+	mov $0, %rcx
+	mov $0, %rax
+	call pthread_create
+	push handle_threaded_print_var(%rip)
+	pop %rdi
+	lea printed_val_var(%rip), %rsi
+	mov $0, %rax
+	call pthread_join
+	push printed_val_var(%rip)
+	lea printf_format(%rip), %rdi
+	pop %rsi
+	mov $0, %rax
+	call printf
+	push $0
+	pop %rax
+	mov %rbp, %rsp
+	pop %rbp
+	pop %rcx
+	add $8, %rsp
+	push %rcx
+	ret
+
+threaded_recursion_fun:
+	push %rbp
+	mov %rsp, %rbp
+	push $0
+	push 16(%rbp)
+	pop %rcx
+	pop %rax
+	cmp %rax, %rcx
+	mov $0, %rax
+	seta %al
+	push %rax
+	pop %rax
+	cmp $0, %rax
+	je else_2
+	push 16(%rbp)
+	call threaded_print_fun
+	push %rax
+	pop %rax
+	mov %rax, x_var(%rip)
+	push 16(%rbp)
+	push $1
+	pop %rcx
+	pop %rax
+	sub %rcx, %rax
+	push %rax
+	call threaded_recursion_fun
+	push %rax
+	pop %rax
+	mov %rax, x_var(%rip)
+	jmp after_2
+	else_2:
+	after_2:
+	push $0
+	pop %rax
+	mov %rbp, %rsp
+	pop %rbp
+	pop %rcx
+	add $8, %rsp
+	push %rcx
+	ret
+
+print_const_fun:
+	pop %rax
+	sub $8, %rsp
+	push %rax
+	lea 8(%rsp), %rdi
+	lea print_const_closure_data(%rip), %rsi
+	mov $8, %rdx
+	call memcpy
+	jmp print_fun_fun
+
+n_sum_const_fun:
+	pop %rax
+	sub $8, %rsp
+	push %rax
+	lea 8(%rsp), %rdi
+	lea n_sum_const_closure_data(%rip), %rsi
+	mov $8, %rdx
+	call memcpy
+	jmp n_sum_fun
 
 f_20_fun:
 	pop %rax
@@ -717,15 +817,13 @@ f_01_fun:
 .data
 printf_format: .string "%d\n"
 scanf_format: .string "%d"
+printed_val_var: .quad 0
+handle_threaded_print_var: .quad 0
 ans_var: .quad 0
-result_f_20_var: .quad 0
-result_f_19_var: .quad 0
-result_f_18_var: .quad 0
-result_f_17_var: .quad 0
-result_f_16_var: .quad 0
-result_f_15_var: .quad 0
-result_f_14_var: .quad 0
-result_f_13_var: .quad 0
+n_sum_val_var: .quad 0
+handle_n_sum_var: .quad 0
+i_var: .quad 0
+x_var: .quad 0
 result_f_12_var: .quad 0
 result_f_11_var: .quad 0
 result_f_10_var: .quad 0
@@ -738,14 +836,6 @@ result_f_04_var: .quad 0
 result_f_03_var: .quad 0
 result_f_02_var: .quad 0
 result_f_01_var: .quad 0
-handle_f_20_var: .quad 0
-handle_f_19_var: .quad 0
-handle_f_18_var: .quad 0
-handle_f_17_var: .quad 0
-handle_f_16_var: .quad 0
-handle_f_15_var: .quad 0
-handle_f_14_var: .quad 0
-handle_f_13_var: .quad 0
 handle_f_12_var: .quad 0
 handle_f_11_var: .quad 0
 handle_f_10_var: .quad 0
@@ -758,6 +848,8 @@ handle_f_04_var: .quad 0
 handle_f_03_var: .quad 0
 handle_f_02_var: .quad 0
 handle_f_01_var: .quad 0
+print_const_closure_data: .zero 8
+n_sum_const_closure_data: .zero 8
 f_20_closure_data: .zero 8
 f_19_closure_data: .zero 8
 f_18_closure_data: .zero 8

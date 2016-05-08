@@ -32,14 +32,6 @@ fun main() {
 	async handle_f_10, f_10
 	async handle_f_11, f_11
 	async handle_f_12, f_12
-	async handle_f_13, f_13
-	async handle_f_14, f_14
-	async handle_f_15, f_15
-	async handle_f_16, f_16
-	async handle_f_17, f_17
-	async handle_f_18, f_18
-	async handle_f_19, f_19
-	async handle_f_20, f_20
 
 	await result_f_01, handle_f_01
 	await result_f_02, handle_f_02
@@ -53,14 +45,6 @@ fun main() {
 	await result_f_10, handle_f_10
 	await result_f_11, handle_f_11
 	await result_f_12, handle_f_12
-	await result_f_13, handle_f_13
-	await result_f_14, handle_f_14
-	await result_f_15, handle_f_15
-	await result_f_16, handle_f_16
-	await result_f_17, handle_f_17
-	await result_f_18, handle_f_18
-	await result_f_19, handle_f_19
-	await result_f_20, handle_f_20
 
 	print result_f_01
 	print result_f_02
@@ -74,14 +58,25 @@ fun main() {
 	print result_f_10
 	print result_f_11
 	print result_f_12
-	print result_f_13
-	print result_f_14
-	print result_f_15
-	print result_f_16
-	print result_f_17
-	print result_f_18
-	print result_f_19
-	print result_f_20
+
+	x = threaded_print(1)
+	x = threaded_print(2)
+	x = threaded_print(3)
+	x = threaded_print(4)
+
+	i = 0
+	while(i < 100) {
+		bind n_sum_const, n_sum, (i)
+
+		async handle_n_sum, n_sum_const
+		await n_sum_val, handle_n_sum
+
+		print n_sum_val
+
+		i = i + 1
+	}
+
+	x = threaded_recursion(100)
 }
 
 fun factorial(n) {
@@ -92,4 +87,29 @@ fun factorial(n) {
 	}
 
 	return ans
+}
+
+fun n_sum(n) {
+	return (n * (n + 1)) / 2
+}
+
+fun print_fun(n) {
+	print n
+	return n
+}
+
+fun threaded_print(n) {
+	bind print_const, print_fun, (n)
+
+	async handle_threaded_print, print_const
+	await printed_val, handle_threaded_print
+
+	print printed_val
+}
+
+fun threaded_recursion(n) {
+	if(n > 0) {
+		x = threaded_print(n)
+		x = threaded_recursion(n - 1)
+	}
 }

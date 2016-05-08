@@ -4,7 +4,8 @@ fun main() {
 	async handle_show1, show1
 	await x, handle_show1
 
-	x = show(2)
+	async handle_show_const, show_const
+	await x, handle_show_const
 }
 
 fun show(a) {

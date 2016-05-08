@@ -29,11 +29,17 @@ main_fun:
 	lea x_var(%rip), %rsi
 	mov $0, %rax
 	call pthread_join
-	push $2
-	call show_fun
-	push %rax
-	pop %rax
-	mov %rax, x_var(%rip)
+	lea handle_show_const_var(%rip), %rdi
+	mov $0, %rsi
+	lea show_const_fun(%rip), %rdx
+	mov $0, %rcx
+	mov $0, %rax
+	call pthread_create
+	push handle_show_const_var(%rip)
+	pop %rdi
+	lea x_var(%rip), %rsi
+	mov $0, %rax
+	call pthread_join
 	push $0
 	pop %rax
 	mov %rbp, %rsp
@@ -90,6 +96,7 @@ show1_fun:
 .data
 printf_format: .string "%d\n"
 scanf_format: .string "%d"
+handle_show_const_var: .quad 0
 x_var: .quad 0
 handle_show1_var: .quad 0
 show1_closure_data: .zero 8
