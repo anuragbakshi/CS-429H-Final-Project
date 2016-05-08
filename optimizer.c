@@ -258,22 +258,22 @@ void get_vars(Expression *expression, Vars *vars) {
 	}
 }
 
-void only_add_bodyvars(Statement *statement, Vars *vars_used) {
+void only_add_bodyvars(Statement *statement, Vars **vars_used) {
 	switch(statement->kind) {
 
 		case sAssignment : {
-			set_add(statement->assignValue, vars_used);
+			set_add(statement->assignValue, *vars_used);
 		} break;
 		case sPrint : {
-			set_add(statement->printValue, vars_used);
+			set_add(statement->printValue, *vars_used);
 		} break;
 		case sIf : {
-			set_add(statement->ifCondition, vars_used);
+			set_add(statement->ifCondition, *vars_used);
 			if(statement->ifThen != NULL) only_add_bodyvars(statement->ifThen, vars_used);
 			if(statement->ifElse != NULL) only_add_bodyvars(statement->ifElse, vars_used);
 		} break;
 		case sWhile : {
-			set_add(statement->whileCondition, vars_used);
+			set_add(statement->whileCondition, *vars_used);
 			if(statement->whileBody != NULL) only_add_bodyvars(statement->whileBody, vars_used);
 		} break;
 
@@ -285,7 +285,7 @@ void only_add_bodyvars(Statement *statement, Vars *vars_used) {
 			}
 		} break;
 		case sReturn : {
-			set_add(statement->returnValue, vars_used);
+			set_add(statement->returnValue, *vars_used);
 		} break;
 		default : break;
 	}
@@ -294,31 +294,33 @@ void only_add_bodyvars(Statement *statement, Vars *vars_used) {
 void print_list(Vars *vars);
 
 void remove_from_set(char *varName, Vars **var_set) {
-	// printf("WE ARE IN REMOVE FROM SET and removing %s\n", varName);
-	// printf("IT WAS INITIALLY\n");
-	// print_list(*var_set);
+	printf("WE ARE IN REMOVE FROM SET and removing %s\n", varName);
+	printf("IT WAS INITIALLY\n");
+	print_list(*var_set);
 	if((*var_set)->first == NULL) return;
 	if(strcmp((*var_set)->first->name, varName) == 0) {
-		printf("GOTCHA1\n");
+		// printf("GOTCHA1\n");
 		if((*var_set)->rest == NULL) (*var_set)->first = NULL;
 		else *var_set = (*var_set)->rest;
+		printf("AND NOW\n");
+		print_list(*var_set);
 		return;
 	}
 	Vars *temp = *var_set;
 	Vars *temp2 = (*var_set)->rest;
 	while(temp2 != NULL) {
-		printf("GOTCHA2\n");
+		// printf("GOTCHA2\n");
 		if(strcmp(temp2->first->name, varName) == 0) {
 			temp->rest = temp2->rest;
 			free(temp2);
-			return;
+			break;
 		}
 		temp = temp2;
 		temp2 = temp2->rest;
 	}
 
-	// printf("AND NOW\n");
-	// print_list(*var_set);
+	printf("AND NOW\n");
+	print_list(*var_set);
 }
 
 void print_list(Vars* vars) {
@@ -329,7 +331,7 @@ void print_list(Vars* vars) {
 }
 
 int in_set(char *varName, Vars *var_set) {
-	print_list(var_set);
+	// print_list(var_set);
 	if(var_set->first == NULL) return 0;
 	while(var_set != NULL) {
 		if(strcmp(var_set->first->name, varName) == 0) return 1;
@@ -348,48 +350,96 @@ void set_add(Expression *expression, Vars *vars_used) {
 	if(list_of_vars != NULL) free(list_of_vars);
 }
 
-void remove_return(Statement *statement, Vars *vars_used) {
-	set_add(statement->returnValue, vars_used);
+void remove_return(Statement *statement, Vars **vars_used) {
+	set_add(statement->returnValue, *vars_used);
 }
 
-void remove_while(Statement *statement, Vars *vars_used) {
-	set_add(statement->whileCondition, vars_used);
+void remove_while(Statement *statement, Vars **vars_used) {
+	set_add(statement->whileCondition, *vars_used);
 	if(statement->whileBody != NULL) only_add_bodyvars(statement->whileBody, vars_used);
 }
 
-void remove_if(Statement *statement, Vars *vars_used) {
-	set_add(statement->ifCondition, vars_used);
+void remove_if(Statement *statement, Vars **vars_used) {
+	set_add(statement->ifCondition, *vars_used);
 	if(statement->ifThen != NULL) only_add_bodyvars(statement->ifThen, vars_used); //todo
 	if(statement->ifElse != NULL) only_add_bodyvars(statement->ifElse, vars_used);
 }
 
-void remove_code_statement(Statement *statement, Vars *vars_used);
+void remove_code_statement(Statement *statement, Vars **vars_used);
 
-void remove_block(Block *block, Vars *vars_used) {
-	if(block == NULL) return;
-	remove_block(block->rest, vars_used);
-	remove_code_statement(block->first, vars_used);
+
+
+void attatch_to_end(Statements *statements, Statements *this) {
+	while(statements->rest != NULL) {
+		statements = statements->rest;
+	}
+	statements->rest = this;
 }
 
-void remove_scan(Statement *statement, Vars *vars_used) {
-	if(in_set(statement->scanVar, vars_used)) remove_from_set(statement->scanVar, &vars_used); 
+Statements *make_stack(Block *block) {
+
+	if(block == NULL || block->first == NULL) return NULL;
+	if(block->rest == NULL) {
+		Statements *statements = NEW(Statements);
+		statements->first = block->first;
+		return statements;
+	} else {
+		Statements *this = NEW(Statements);
+		this->first = block->first;
+		Statements *statements = make_stack(block->rest);
+		attatch_to_end(statements, this);
+		return statements;
+	}
+}
+
+void remove_block(Block *block, Vars **vars_used) {
+	if(block == NULL) return;
+	Statements *block_body = make_stack(block);
+	while(block_body != NULL) {
+		printf("~~~~~~~~~~~~~~~~~~~~\n");
+		printf("IN BLOCK THE SET IS\n");
+		printf("~~~~~~~~~~~~~~~~~~~~\n");
+		print_list(*vars_used);
+		printf("~~~~~~~~~~~~~~~~~~~~\n");
+		remove_code_statement(block_body->first, vars_used);
+		block_body = block_body->rest;
+	}
+	free(block_body);
+}
+
+void remove_scan(Statement *statement, Vars **vars_used) {
+	if(in_set(statement->scanVar, *vars_used)) remove_from_set(statement->scanVar, vars_used); 
 	else statement->kind = sNull; 
 }
 
-void remove_assignment(Statement *statement, Vars *vars_used) {
-	if(in_set(statement->assignName, vars_used)) {
-		printf("IT IS IN SET MUHAHAHAHAHAHA\n\n\n");
-		remove_from_set(statement->assignName, &vars_used);
-		set_add(statement->assignValue, vars_used);
+void remove_assignment(Statement *statement, Vars **vars_used) {
+
+	printf("WE ARE IN ASSIGN\n");
+	printf("WE ARE ASSIGNING TO %s\n", statement->assignName);
+	printf("The depends are\n");
+	print_list(*vars_used);
+
+
+	if(in_set(statement->assignName, *vars_used)) {
+		// printf("IT IS IN SET MUHAHAHAHAHAHA\n\n\n");
+		printf("Before remove set %s it was\n", statement->assignName);
+		printf("In set\n");
+		print_list(*vars_used);
+		remove_from_set(statement->assignName, vars_used);
+		printf("And after it was\n");
+		print_list(*vars_used);
+		set_add(statement->assignValue, *vars_used);
+		printf("but wait?\n");
+		print_list(*vars_used);
 	}
 	else statement->kind = sNull;
 }
 
-void remove_print(Statement *statement, Vars *vars_used) {
-	set_add(statement->printValue, vars_used);
+void remove_print(Statement *statement, Vars **vars_used) {
+	set_add(statement->printValue, *vars_used);
 }
 
-void remove_code_statement(Statement *statement, Vars *vars_used) {
+void remove_code_statement(Statement *statement, Vars **vars_used) {
 	switch(statement->kind) {
 		case sAssignment : {
 			remove_assignment(statement, vars_used);
@@ -422,7 +472,9 @@ void remove_code_statement(Statement *statement, Vars *vars_used) {
 
 void remove_code_function(Fun *fun) {
 	Vars *vars_used = NEW(Vars);
-	remove_code_statement(fun->body, vars_used);
+	Vars **vars = NEW(Vars *);
+	*vars = vars_used;
+	remove_code_statement(fun->body, vars);
 }
 
 void remove_code(Funs *funs) {
