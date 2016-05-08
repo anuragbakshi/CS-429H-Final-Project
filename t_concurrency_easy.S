@@ -20,7 +20,7 @@ main_fun:
 	add $8, %rsp
 	lea handle_show1_var(%rip), %rdi
 	mov $0, %rsi
-	lea show_const_fun(%rip), %rdx
+	lea show1_fun(%rip), %rdx
 	mov $0, %rcx
 	mov $0, %rax
 	call pthread_create
@@ -38,6 +38,9 @@ main_fun:
 	pop %rax
 	mov %rbp, %rsp
 	pop %rbp
+	pop %rcx
+	add $0, %rsp
+	push %rcx
 	ret
 
 show_fun:
@@ -52,6 +55,9 @@ show_fun:
 	pop %rax
 	mov %rbp, %rsp
 	pop %rbp
+	pop %rcx
+	add $8, %rsp
+	push %rcx
 	ret
 
 show_const_fun:
@@ -66,6 +72,9 @@ show_const_fun:
 	pop %rax
 	mov %rbp, %rsp
 	pop %rbp
+	pop %rcx
+	add $0, %rsp
+	push %rcx
 	ret
 
 show1_fun:

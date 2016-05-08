@@ -383,6 +383,12 @@ void genExpression(Expression *expression, Formals *scope) {
 			// 	printf("	sub $8, %%rsp\n");
 			// }
 
+			Fun *fun = getFunByName(expression->callName);
+			if(fun != NULL) {
+				size_t numArgs = (fun->formals != NULL) ? fun->formals->n : 0;
+				LIST_TRUNC(&expression->callActuals, numArgs);
+			}
+
 			// push arguments onto stack
 			genActuals(expression->callActuals, scope);
 
@@ -627,6 +633,15 @@ void genReturn(Statement *statement, Formals *scope) {
 	printf("	pop %%rbp\n");
 	// stackAligned = !stackAligned;
 
+	// get return address
+	printf("	pop %%rcx\n");
+
+	// consume args
+	size_t numArgs = (scope != NULL) ? scope->n : 0;
+	printf("	add $%lu, %%rsp\n", numArgs * 8);
+
+	// printf("	ret\n");
+	printf("	push %%rcx\n");
 	printf("	ret\n");
 }
 
