@@ -1,3 +1,15 @@
 Please include clear and simple instructions for running your project.
+The project can be run using all tests using "make clean test"
+(Note: t_scan should be run as "echo '9000\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10' | make t_scan.result" or the input should be typed manually for the test to pass)
+The program is called "p4" (most of the base code is from it) and should be run on Linux. Mac OS X will not work as the program does not preserve stack alignment. It has been tested on the lab computers so it should work there.
 
 Explain why your supplied tests illustrate that your project works
+The added tests, t_math, t_scan, t_closures, t_concurrency_easy, and t_concurrency test all the language additions to fun.
+
+t_math: tests the new basic arithmetic operators
+t_scan: tests the new "scan" keyword to read from stdin in a few cases (in main, in loops, in functions)
+t_closures: tests the "bind" keyword in a few situations
+t_concurrency_easy: tests basic creation and joining of async tasks
+t_concurrency: comprehensively tests async/await and closures in various cases (in main, in functions, in loops, in recursion)
+
+All of these tests together comprehensively test all the new language additions in several realistic use cases and demonstrate that the project works as intended. (Note: the concurrency tests may fail as the threads may be executed in an unpredictable order. The ok files were created according to how it ran on my single CPU VM)

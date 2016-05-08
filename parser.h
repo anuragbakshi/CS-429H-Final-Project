@@ -32,6 +32,13 @@
 	__len; \
 })
 
+// void (list<T> **, size_t)
+#define LIST_TRUNC(list, len) ({ \
+	FOREACH(*(list)) { \
+		if(__item->n == len) *(list) = __item; \
+	} \
+})
+
 // void (list<T> **)
 #define LIST_REVERSE(list) ({ \
 	typeof(*(list)) __node = (*list); \
@@ -150,6 +157,8 @@ enum SKind {
 	sPrint,
 	sScan,
 	sBind,
+	sAsync,
+	sAwait,
 	sIf,
 	sWhile,
 	sBlock,
@@ -175,6 +184,16 @@ struct Statement {
 		struct {
 			Closure *closure;
 			Actuals *closureActuals;
+		};
+
+		struct {
+			char *handleVar;
+			char *asyncFunName;
+		};
+
+		struct {
+			char *retVar;
+			Expression *awaitHandle;
 		};
 
 		struct {
@@ -217,5 +236,6 @@ typedef struct Funs {
 } Funs;
 
 extern Funs *parse();
+extern void gen_code(Funs *tree);
 
 #endif
