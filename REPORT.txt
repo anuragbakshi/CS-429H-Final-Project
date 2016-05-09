@@ -64,10 +64,10 @@ What was difficult?
     Adding I/O and arithmetic was quite straightforward and didn't take much time.
 
     Initially, adding closures seemed simple as well since we had already implemented
-    thunks in p7. For this project however, since we must produce assembly code that 
-    has the intended effect of the program. This involved lots of stack manipulation 
+    thunks in p7. For this project however, since we must produce assembly code that
+    has the intended effect of the program. This involved lots of stack manipulation
     to place arguments in the correct locations for implementing closures to make them
-    to work for all use cases (partial evaluation, any number of arguments, nested 
+    to work for all use cases (partial evaluation, any number of arguments, nested
     closures, dynamic creation in loops and such).
 
     Implementing asynchronous tasks was also interesting since I got to work with
