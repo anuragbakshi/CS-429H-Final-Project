@@ -90,5 +90,5 @@ What did you learn?
     about x86 assembly and the conventions involved at a much deeper level. In
     addition, I was able to become familiar with the pthread library and how threads
     are managed on POSIX systems in general. Outside of class, I use languages
-    like Python and Javascript as lot so it was also interesting to implement some of
+    like Python and Javascript a lot so it was also interesting to recreate some of
     the main features of those languages and understand how they might be implemented.
