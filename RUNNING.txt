@@ -1,6 +1,10 @@
 Please include clear and simple instructions for running your project.
 
     The project can be run using all tests using "make clean test"
+
+    If you want to see the symantics analysis, follow the instructions
+    in the "optimize" function in optimizer.c
+
     (Note: t_scan should be run as 
     "echo '9000\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10' | make t_scan.result" or the
     input should be typed manually for the test to pass). The program is called
@@ -8,7 +12,7 @@ Please include clear and simple instructions for running your project.
     Mac OS X will not work as the program does not preserve stack alignment. 
     It has been tested on the lab computers so it should work there.
 
-    Explain why your supplied tests illustrate that your project works
+Explain why your supplied tests illustrate that your project works
 
     The added tests, t_math, t_scan, t_closures, t_concurrency_easy, 
     and t_concurrency test all the language additions to fun.

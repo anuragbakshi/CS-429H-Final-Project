@@ -544,13 +544,6 @@ int has_calls(Fun *fun) {
 	return 0;
 }
 
-void optimize(Funs *funs) {
-	if (funs == NULL || funs->first == NULL || funs->rest != NULL) return;
-	if(has_calls(funs->first)) return;
-	find_semantics(funs, NULL);
-	remove_code(funs);
-}
-
 void print_vars(Vars *v) {
 	if(v == NULL) {
 		// printf("\tNONE\n");
@@ -609,3 +602,14 @@ void print_semantics(Funs *funs) {
 		print_func_semantics(__item->first);
 	}
 }
+
+void optimize(Funs *funs) {
+	if (funs == NULL || funs->first == NULL || funs->rest != NULL) return;
+	if(has_calls(funs->first)) return;
+	/*to see symantics, uncomment lines 610,611 and comment out 612*/
+	// find_semantics(funs, NULL);
+	// print_semantics(funs);
+	remove_code(funs); 
+}
+
+
