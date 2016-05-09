@@ -65,3 +65,6 @@ What did you learn?
     relatively simplistic, they manage to remove a significant amount of
     redundant code, as can be seen by comparing the assembly output from
     rremove_test_1a, remove_test_1b and remove_test_1c.
+
+	Anurag:
+	Since a lot of my portion of the project was using tricky stack manipulation and copying memory blocks (to make closures arguments work), I learned alot about x86 assembly and the conventions involved at a much deeper level. In addition, I was able to become familiar with the pthread library and how threads are managed on POSIX systems in general. Outside of class, I use languages like Python and Javascript as lot so it was also interesting to implement some of the main features of those languages and understand how they might be implemented.
